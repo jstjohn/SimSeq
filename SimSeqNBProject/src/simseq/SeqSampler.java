@@ -137,19 +137,21 @@ public class SeqSampler{
             int rstart;
             if(rev){ //sample from reverse
                 rstart = Math.abs(Math.min(0,i-b-read2_len));
-                sr2.seqLine.replace(rstart,read2_len,seq.substring(p,p+read2_len-rstart));
+                sr2.seqLine.replace(rstart,read2_len,seq.substring(p+b-i-read2_len-rstart,p+b-i-rstart));
+                sr2.mpos = p+b-i-read2_len-rstart;
                 if(rstart != 0){
                     sr2.seqLine.replace(0,rstart,seq.substring(p+l-rstart,p+l));
                     sr2.chimeric = true;
                     sr2.query_unmapped = true;
                     sr1.mate_unmapped = true;
                     sr2.proper_pair=sr1.proper_pair=false;
-                    sr1.isize=sr2.isize=0;
+                    sr2.isize=sr1.isize=0;
                 }
                 rstart = Math.abs(Math.min(0,b-read1_len));
-                sr1.seqLine.replace(0,rstart,seq.substring(p+l-b,p+l-b+rstart));
+                sr1.seqLine.replace(0,read1_len-rstart,seq.substring(p+l-b,p+l-b+read1_len-rstart));
+                sr1.mpos = p+l-b;
                 if(rstart != 0){
-                    sr1.seqLine.replace(rstart, read1_len, seq.substring(p,p+read1_len-rstart));
+                    sr1.seqLine.replace(read1_len-rstart, read1_len, seq.substring(p,p+rstart));
                     sr1.chimeric = true;
                     sr1.query_unmapped = true;
                     sr2.mate_unmapped = true;
@@ -163,7 +165,8 @@ public class SeqSampler{
                 
             }else{//sample from forward
                 rstart = Math.abs(Math.min(0,i-b-read1_len));
-                sr1.seqLine.replace(rstart,read1_len,seq.substring(p,p+read1_len-rstart));
+                sr1.seqLine.replace(rstart,read1_len,seq.substring(p+b-i-read1_len-rstart,p+b-i-rstart));
+                sr1.mpos = p+b-i-read1_len-rstart;
                 if(rstart != 0){
                     sr1.seqLine.replace(0,rstart,seq.substring(p+l-rstart,p+l));
                     sr1.chimeric = true;
@@ -173,9 +176,10 @@ public class SeqSampler{
                     sr1.isize=sr2.isize=0;
                 }
                 rstart = Math.abs(Math.min(0,b-read2_len));
-                sr2.seqLine.replace(0,rstart,seq.substring(p+l-b,p+l-b+rstart));
+                sr2.seqLine.replace(0,read2_len-rstart,seq.substring(p+l-b,p+l-b+read2_len-rstart));
+                sr2.mpos = p+l-b;
                 if(rstart != 0){
-                    sr2.seqLine.replace(rstart, read1_len, seq.substring(p,p+read2_len-rstart));
+                    sr2.seqLine.replace(read2_len-rstart, read2_len, seq.substring(p,p+rstart));
                     sr2.chimeric = true;
                     sr2.query_unmapped = true;
                     sr1.mate_unmapped = true;
@@ -183,7 +187,7 @@ public class SeqSampler{
                     sr2.isize=sr1.isize=0;
                 }
                 if(!sr1.chimeric && !sr2.chimeric){
-                    sr1.isize=l-read1_len;
+                    sr1.isize=l-read2_len;
                     sr2.isize = - sr1.isize;
                 }
             }
