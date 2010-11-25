@@ -1,0 +1,12 @@
+SimSeqNBProject currently contains the net beans project with the initial source
+
+getErrorProfile will contain the c source for the program that generates the
+error model for the sequence simulator. I am in the process of making it
+compatible on computers other than my own.
+
+examples contains some things to run this on. Right now there is
+an example mitochondrial sequence, and an example error profile
+for a 100 base illumina read.
+
+
+
