@@ -10,3 +10,42 @@ for a 100 base illumina read.
 
 
 
+usage: java -jar -Xmx2048m SimSeq.jar [required options] [options]
+ -1,--read1_length <arg>            Integer length of first read. Default:
+                                    100
+ -2,--read2_length <arg>            Integer length of second read.
+                                    Default: 100
+ -d,--dip <arg>                     If diploid data desired, path to
+                                    diploid file. (format: chrom pos(0
+                                    based) altChar
+    --debug                         Write debug info to stderr.
+ -e,--error <arg>                   If simulated read error desired, path
+                                    to read error file.
+ -h,--help                          Print this usage message.
+ -l,--insert_size <arg>             mean library insert size for either
+                                    mate-paired or paired-end. Default:
+                                    200
+ -m,--mate_pair                     Perform mate-pair rather than paired
+                                    end run.
+    --mate_frag <arg>               If using a mate-pair library, what is
+                                    your desired loop fragmentation size?
+                                    Default: 500
+    --mate_frag_stdev <arg>         If using a mate-pair library, what is
+                                    your desired loop fragmentation size
+                                    standard deviation? Default: 50
+    --mate_pulldown_error_p <arg>   If using a mate-pair library, what is
+                                    the probability that a read does not
+                                    include the biotin marker? Default:
+                                    0.3
+ -n,--read_number <arg>             Integer number of reads you would like
+                                    to sample. Default: 1000000
+ -o,--out <arg>                     Filename for output sam file
+                                    (REQUIRED)
+ -p,--read_prefix <arg>             Prefix for simulated reads. Default:
+                                    SimSeq_
+ -r,--reference <arg>               Reference genome sequence in
+                                    uncompressed fasta format (REQUIRED)
+ -s,--insert_stdev <arg>            mean library insert stdev for either
+                                    mate-paired or paired-end. Default: 20
+ -u,--duplicate_probability <arg>   probability of generating a duplicate.
+                                    Default: 0.0
