@@ -1,8 +1,11 @@
 SimSeqNBProject currently contains the net beans project with the initial source
 
-getErrorProfile will contain the c source for the program that generates the
-error model for the sequence simulator. I am in the process of making it
-compatible on computers other than my own.
+getErrorProfile contains the c source for the program that generates the
+error model for the sequence simulator. This program utilizes a subset
+of the kent source library (http://hgwdev.cse.ucsc.edu/~kent/src/) which
+is freely available for both commercial and non-commercial use 
+(see README in "getErrorProfile/kent" for more information)
+
 
 examples contains some things to run this on. Right now there is
 an example mitochondrial sequence, and an example error profile
