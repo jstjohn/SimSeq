@@ -20,7 +20,7 @@ import org.apache.commons.cli.PosixParser;
  * @author john
  */
 public class Main{
-
+    private static String lastUpdate = "11.26.2010";
     /**
      * @param args the command line arguments
      */
@@ -64,7 +64,7 @@ public class Main{
             CommandLine cmd = parser.parse(options, args);
             
             if(cmd.hasOption('h')){
-                formatter.printHelp( "java -jar -Xmx2048m SimSeq.jar [required options] [options]", options );
+                formatter.printHelp( "java -jar -Xmx2048m SimSeq.jar [required options] [options]\nLast Updated: "+lastUpdate, options );
                 System.exit(1);
             }
             if(!cmd.hasOption('o') || !cmd.hasOption('r')){
@@ -174,6 +174,15 @@ public class Main{
 
                         while(duplicate){
                             //mark duplicate
+                            i++;
+                            if(i>=num){
+                                duplicate = false;
+                                sr1.duplicate = false;
+                                sr2.duplicate = false;
+                                break;
+                            }//double check we aren't duplicating over the number of reads
+                            sr1.seqIndex++; //increment the counters
+                            sr2.seqIndex++; //increment the counters
                             sr1.duplicate = duplicate;
                             sr2.duplicate = duplicate;
                             //restore original reads and qual prior to error
@@ -238,6 +247,16 @@ public class Main{
 
                         while(duplicate){
                             //mark duplicate
+                            i++;
+                            if(i>=num){
+                                duplicate = false;
+                                sr1.duplicate = false;
+                                sr2.duplicate = false;
+                                break;
+                            }//double check we aren't duplicating over the number of reads
+                            sr1.seqIndex++; //increment the counters
+                            sr2.seqIndex++; //increment the counters
+                            
                             sr1.duplicate = duplicate;
                             sr2.duplicate = duplicate;
                             //restore original reads and qual prior to error

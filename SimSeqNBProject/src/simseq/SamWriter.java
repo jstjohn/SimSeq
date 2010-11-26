@@ -39,8 +39,7 @@ public class SamWriter {
         if(!rec.query_unmapped)writer.print("255"); //mapq=255 means no map quality information
         else writer.print("0");
         writer.print("\t");
-        if(!rec.query_unmapped)writer.print(rec.cigar); //cigar
-        else writer.print("*");
+        writer.print(rec.cigar); //cigar
         writer.print("\t");
         writer.print("="); //name of mate's reference(MRNM) = for same
         writer.print("\t");

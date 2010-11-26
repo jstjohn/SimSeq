@@ -55,8 +55,9 @@ simseq.StringBuilderDNA
 simseq.SeqSampler
 java.lang.Object
 simseq.SamRecord
-java.lang.RuntimeException
 java.lang.String
+java.lang.RuntimeException
+java.lang.Integer
 ||:simseq.FastaReader
 java.lang.StringBuilder
 java.io.File
