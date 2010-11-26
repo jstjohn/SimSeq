@@ -9,7 +9,8 @@ is freely available for both commercial and non-commercial use
 
 examples contains some things to run this on. Right now there is
 an example mitochondrial sequence, and an example error profile
-for a 100 base illumina read.
+from a 100 bp illumina GAIIx dataset. You can simulate any read
+less than or equal to 100bp in length using that error profile.
 
 
 
@@ -52,3 +53,28 @@ usage: java -jar -Xmx2048m SimSeq.jar [required options] [options]
                                     mate-paired or paired-end. Default: 20
  -u,--duplicate_probability <arg>   probability of generating a duplicate.
                                     Default: 0.0
+
+
+
+===Quick Start Example:===
+==Prerequisits==
+0.0. Download and install samtools: http://samtools.sourceforge.net/ and add executable to your $PATH
+0.1. Download latest Picard jar file: http://sourceforge.net/projects/picard/files/, and extract .jar files somewhere that makes sense like $HOME/jars/, for the rest of this I will assume that all jar files are located in $HOME/jars/
+==Generate and check simulated reads==
+1. Download SimSeq.jar, error_profile.txt, and AlligatorMito.fa
+2. put SImSeq.jar in your jar directory ($HOME/jars/ or something) and put error_profile.txt and AlligatorMito.fa in a folder where you want to work
+3. Run `java -jar -Xmx2048m $HOME/jars/SimSeq.jar -1 100 -2 100 \
+    -e error_profile.txt --insert_size 3000 --insert-stdev 300 \
+    --mate_pair --mate_frag 500 --mate_frag_stdev 50 \
+    --mate_pulldown_error_p 0.3 --read_number 10000 \
+    --read_prefix AMito_ --reference AlligatorMito.fa \
+    --duplicate_probability 0.01 --out out.sam`
+4. Convert sam output to bam: `samtools view -bS -T AlligatorMito.fa -t AlligatorMito.size  -o out.bam `
+5. Sort the bam file: `samtools sort out.bam out.sorted`
+6. Index the sorted bam file: `samtools index out.sorted.bam`
+7. Check the alignment in tview: `samtools tview out.sorted.bam AlligatorMito.fa`
+==Convert Sam output to Fastq==
+run `java -jar -Xmx2048 $HOME/jars/SamToFastq.jar INPUT=out.sorted.bam FASTQ=library.1.fastq SECOND_END_FASTQ=library.2.fastq INCLUDE_NON_PF_READS=true VALIDATION_STRINGENCY=SILENT`
+
+Note setting the VALIDATION_STRINGENCY=SILENT is probably not ideal, but for now it is necessary because samtools isn't putting the length of the reference sequence into the header, which is expected by Picard. You get an error about the first read having a coordinate outside of the range of the reference sequence which has a length of 0. If you use Picard to somehow fix the header given the reference sequence this should work without telling it not to validate your sequence.
+

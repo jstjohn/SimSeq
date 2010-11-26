@@ -4,3 +4,5 @@ bin/
 *.bam
 *.bai
 *.fai
+*.fastq
+*.fq
