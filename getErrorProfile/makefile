@@ -2,7 +2,7 @@ CC=gcc
 MACHTYPE=x86_64
 CFLAGS=-c
 COPTS=-Ikent/inc -Iinc -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -DMACHTYPE_${MACHTYPE}
-LDFLAGS=-lz -fno-strict-aliasing -lm -lssl -lcrypto
+LDFLAGS=-lm
 SOURCES=getErrorProfile.c
 LIBSRC=kent/lib/common.c kent/lib/dlist.c kent/lib/bPlusTree.c kent/lib/dystring.c \
 	 kent/lib/linefile.c kent/lib/nib.c kent/lib/sqlNum.c kent/lib/base64.c kent/lib/dnaLoad.c \

@@ -67,7 +67,7 @@ void freeFastqItem(struct fastqItem * fq)
 			free(fq->score);
 			fq->score = NULL;
 		}
-		free(&fq);
+		free(fq);
 		fq = NULL;
 	}
 }
