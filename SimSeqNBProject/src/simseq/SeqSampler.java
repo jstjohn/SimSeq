@@ -164,14 +164,13 @@ public class SeqSampler{
                 sr2.pos = p+i-b-read2_len+rstart + 1; //1 based
                 if(rstart != 0){
                     sr2.seqLine.replace(0,rstart,seq.substring(p+l-rstart,p+l));
-                    sr2.cigar = Integer.toString(read2_len-rstart)+
-                            "M"+Integer.toString(l-(i-b-read2_len))+
-                            "N"+Integer.toString(rstart)+"M";
+                    sr2.cigar = Integer.toString(rstart)+
+                            "S"+Integer.toString(read2_len-rstart)+"M";
                     sr2.chimeric = true;
-                    sr2.query_unmapped = true;
-                    sr1.mate_unmapped = true;
-                    sr2.proper_pair=sr1.proper_pair=false;
-                    sr2.isize=sr1.isize=0;
+//                    sr2.query_unmapped = true;
+//                    sr1.mate_unmapped = true;
+//                    sr2.proper_pair=sr1.proper_pair=false;
+//                    sr2.isize=sr1.isize=0;
                 }else{ //not a chimeric read, so cigar is all match
                     sr2.cigar = Integer.toString(read2_len)+"M";
                 }
@@ -180,39 +179,40 @@ public class SeqSampler{
                 
                 if(rstart != 0){
                     sr1.pos = p+1;
-                    sr1.cigar = Integer.toString(rstart)+
-                            "M"+Integer.toString(l-b)+
-                            "N"+Integer.toString(read1_len-rstart)+"M";
+                    sr1.cigar = Integer.toString(read1_len-rstart)+
+                            "S"+Integer.toString(rstart)+
+                            "M";
                     sr1.seqLine.replace(read1_len-rstart, read1_len, seq.substring(p,p+rstart));
                     sr1.chimeric = true;
-                    sr1.query_unmapped = true;
-                    sr2.mate_unmapped = true;
-                    sr2.proper_pair=sr1.proper_pair=false;
-                    sr1.isize=sr2.isize=0;
+//                    sr1.query_unmapped = true;
+//                    sr2.mate_unmapped = true;
+//                    sr2.proper_pair=sr1.proper_pair=false;
+//                    sr1.isize=sr2.isize=0;
                 }else{ //not a chimeric read so CIGAR is all match
                     sr1.cigar = Integer.toString(read1_len)+"M";
                     sr1.pos = p+l-b + 1; //1 based
                 }
-                if(!sr1.chimeric && !sr2.chimeric){
-                    sr2.isize=l-read1_len;
-                    sr1.isize = - sr2.isize;
-                }
+//                if(!sr1.chimeric && !sr2.chimeric){
+//                    sr2.isize=l-read1_len;
+//                    sr1.isize = - sr2.isize;
+//                }
                 sr1.mpos = sr2.pos;
                 sr2.mpos = sr1.pos;
+                sr1.isize = sr1.pos - sr2.pos;
+                sr2.isize = sr2.pos - sr1.pos;
             }else{//sample from forward
                 rstart = Math.abs(Math.min(0,i-b-read1_len));
                 sr1.seqLine.replace(rstart,read1_len,seq.substring(p+i-b-read1_len+rstart,p+i-b));
                 sr1.pos = p+i-b-read1_len+rstart + 1; //1 based
                 if(rstart != 0){
                     sr1.seqLine.replace(0,rstart,seq.substring(p+l-rstart,p+l));
-                    sr1.cigar = Integer.toString(read1_len-rstart)+
-                            "M"+Integer.toString(l-(i-b-read1_len))+
-                            "N"+Integer.toString(rstart)+"M";
+                    sr1.cigar = Integer.toString(rstart)+
+                            "S"+Integer.toString(read1_len-rstart)+"M";
                     sr1.chimeric = true;
-                    sr1.query_unmapped = true;
-                    sr2.mate_unmapped = true;
-                    sr1.proper_pair=sr2.proper_pair=false;
-                    sr1.isize=sr2.isize=0;
+//                    sr1.query_unmapped = true;
+//                    sr2.mate_unmapped = true;
+//                    sr1.proper_pair=sr2.proper_pair=false;
+//                    sr1.isize=sr2.isize=0;
                 }else{ //not a chimeric read, so cigar is all match
                     sr1.cigar = Integer.toString(read1_len)+"M";
                 }
@@ -221,25 +221,27 @@ public class SeqSampler{
 
                 if(rstart != 0){
                     sr2.pos = p+1;
-                    sr2.cigar = Integer.toString(rstart)+
-                            "M"+Integer.toString(l-b)+
-                            "N"+Integer.toString(read2_len-rstart)+"M";
+                    sr2.cigar = Integer.toString(read2_len-rstart)+
+                            "S"+Integer.toString(rstart)+
+                            "M";
                     sr2.seqLine.replace(read2_len-rstart, read2_len, seq.substring(p,p+rstart));
                     sr2.chimeric = true;
-                    sr2.query_unmapped = true;
-                    sr1.mate_unmapped = true;
-                    sr1.proper_pair=sr2.proper_pair=false;
-                    sr2.isize=sr1.isize=0;
+//                    sr2.query_unmapped = true;
+//                    sr1.mate_unmapped = true;
+//                    sr1.proper_pair=sr2.proper_pair=false;
+//                    sr2.isize=sr1.isize=0;
                 }else{ //not a chimeric read so CIGAR is all match
                     sr2.cigar = Integer.toString(read2_len)+"M";
                     sr2.pos = p+l-b + 1; //1 based
                 }
-                if(!sr1.chimeric && !sr2.chimeric){
-                    sr1.isize=l-read2_len;
-                    sr2.isize = - sr1.isize;
-                }
+//                if(!sr1.chimeric && !sr2.chimeric){
+//                    sr1.isize=l-read2_len;
+//                    sr2.isize = - sr1.isize;
+//                }
                 sr1.mpos = sr2.pos;
                 sr2.mpos = sr1.pos;
+                sr1.isize = sr1.pos - sr2.pos;
+                sr2.isize = sr2.pos - sr1.pos;
             }
         }
     }

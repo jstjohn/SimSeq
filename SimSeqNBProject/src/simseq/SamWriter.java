@@ -36,8 +36,7 @@ public class SamWriter {
         writer.print("\t");
         writer.print(Integer.toString(rec.pos));//pos
         writer.print("\t");
-        if(!rec.query_unmapped)writer.print("255"); //mapq=255 means no map quality information
-        else writer.print("0");
+        writer.print("255"); //mapq=255 means no map quality information
         writer.print("\t");
         writer.print(rec.cigar); //cigar
         writer.print("\t");
