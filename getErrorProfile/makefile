@@ -3,6 +3,7 @@ MACHTYPE=x86_64
 CFLAGS=-c
 COPTS=-Ikent/inc -Iinc -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -DMACHTYPE_${MACHTYPE}
 LDFLAGS=-lm
+FASIZE=faSize.c
 SOURCES=getErrorProfile.c
 LIBSRC=kent/lib/common.c kent/lib/dlist.c kent/lib/bPlusTree.c kent/lib/dystring.c \
 	 kent/lib/linefile.c kent/lib/nib.c kent/lib/sqlNum.c kent/lib/base64.c kent/lib/dnaLoad.c \
@@ -17,16 +18,17 @@ LIBSRC=kent/lib/common.c kent/lib/dlist.c kent/lib/bPlusTree.c kent/lib/dystring
 
 
 OBJECTS=$(SOURCES:.c=.o)
+FASIZEO=$(FASIZE:.c=.o)
 LIBOBJECTS=$(LIBSRC:.c=.o)
 EXECUTABLE=getErrorProfile
 
-all: $(SOURCES) $(LIBOBJECTS) $(EXECUTABLE) faSize
+all: $(SOURCES) $(LIBOBJECTS) $(EXECUTABLE) faSize $(FASIZEO)
 
 $(EXECUTABLE): $(OBJECTS) $(LIBOBJECTS)
 	$(CC) $(COPTS) $(LDFLAGS) $(OBJECTS) $(LIBOBJECTS) -o $@
 
-faSize: $(SOURCES) $(LIBOBJECTS)
-	$(CC) $(COPTS) $(LDFLAGS) $(OBJECTS) $(LIBOBJECTS) -o $@
+faSize: $(LIBOBJECTS) $(FASIZEO)
+	$(CC) $(COPTS) $(LDFLAGS) $(FASIZEO) $(LIBOBJECTS) -o $@
 	
 install: all
 	-mv $(EXECUTABLE) ../bin
