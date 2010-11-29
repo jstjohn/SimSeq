@@ -20,14 +20,17 @@ OBJECTS=$(SOURCES:.c=.o)
 LIBOBJECTS=$(LIBSRC:.c=.o)
 EXECUTABLE=getErrorProfile
 
-all: $(SOURCES) $(LIBOBJECTS) $(EXECUTABLE) $(LIBA)
+all: $(SOURCES) $(LIBOBJECTS) $(EXECUTABLE) faSize
 
-$(EXECUTABLE): $(OBJECTS) $(LIBOBJECTS) $(LIBA)
+$(EXECUTABLE): $(OBJECTS) $(LIBOBJECTS)
 	$(CC) $(COPTS) $(LDFLAGS) $(OBJECTS) $(LIBOBJECTS) -o $@
 
+faSize: $(SOURCES) $(LIBOBJECTS)
+	$(CC) $(COPTS) $(LDFLAGS) $(OBJECTS) $(LIBOBJECTS) -o $@
+	
 install: all
 	-mv $(EXECUTABLE) ../bin
-
+	-mv faSize ../bin
 #$(LIBA): $(LIBOBJECTS)
 #	ar rcus $(LIBA) $(LIBOBJECTS)
 
