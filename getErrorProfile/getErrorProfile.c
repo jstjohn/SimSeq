@@ -119,7 +119,7 @@ bool invalid(char c){
   }
 }
 
-bool hasAny(long long int ** c){
+bool hasAny(unsigned long long ** c){
   int i,j;
   for(i=0;i<4;i++){
     for(j=0;j<5;j++){
@@ -154,7 +154,7 @@ void getErrorProfile()
   char *words[12];
   int i,j,k;
   //For every position store the off diagonal substitution matrix + the frequency of shifting to N
-  unsigned long long **** mutation = (unsigned long long ***)needMem(sizeof(unsigned long long **)*readLen);//will hold a position specific hist
+  unsigned long long **** mutation = (unsigned long long ****)needMem(sizeof(unsigned long long ***)*readLen);//will hold a position specific hist
   for(i=0;i<readLen;i++)
     {
       
