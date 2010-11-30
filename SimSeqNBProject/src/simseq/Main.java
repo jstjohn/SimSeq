@@ -91,13 +91,15 @@ public class Main{
                 System.err.println("WARNING: diploid sites addition is not currently implemented");
                 dadd = new AddDiploid(cmd.getOptionValue('d'),debug);
             }
-            if(cmd.hasOption('e')){
-                eadd = new AddError(cmd.getOptionValue('e'),debug);
+            if(cmd.hasOption("error") && !cmd.hasOption("error2")){
+                eadd = new AddError(cmd.getOptionValue('e'),Math.max(read1_length, read2_length),debug);
             }
-            if(cmd.hasOption("error2")){
-                if(eadd == null)
+            else if(cmd.hasOption("error2"))
+            {
+                if(!cmd.hasOption("error"))
                     throw new ParseException("You must supply an error file with '-e' or '--error' if you also want to supply '--error2'");
-                eadd2 = new AddError(cmd.getOptionValue("error2"),debug);
+                eadd = new AddError(cmd.getOptionValue("error"),read1_length,debug);
+                eadd2 = new AddError(cmd.getOptionValue("error2"),read2_length,debug);
             }
             SamWriter swrite = new SamWriter(out);
             //get seq length

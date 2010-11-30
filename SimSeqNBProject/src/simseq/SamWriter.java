@@ -49,6 +49,9 @@ public class SamWriter {
         writer.print(rec.seqLine.toString());//seq
         writer.print("\t");
         writer.print(rec.qualLine.toString());
+        writer.print("\t");
+        if(rec.chimeric) writer.print("YC:Z:"+rec.c_cigar);
+        else writer.print("YC:Z:"+rec.cigar);
         writer.print("\n");
 
 

@@ -17,134 +17,109 @@ import java.util.Random;
  */
 public class AddError {
 
-    private float[][] mpA;
-    private float[][] mpC;
-    private float[][] mpG;
-    private float[][] mpT;
-    private ArrayList<float[]> qhA;
-    private ArrayList<float[]> qhC;
-    private ArrayList<float[]> qhG;
-    private ArrayList<float[]> qhT;
+    private int[][][] mpA;
+    private int[][][] mpC;
+    private int[][][] mpG;
+    private int[][][] mpT;
     private Random rand = new Random();
+    //private boolean phred33;
 
-    public AddError(String errorFname, boolean debug) throws IOException {
+    public AddError(String errorFname, int rlen, boolean debug) throws IOException {
         /*
          * Constructor, simply read in the error file and get ready to
          * add error to any reads that come by.
          */
-        parseErrorFile(errorFname);
+        //phred33 = phred_33; //for now this is not an option
+        parseErrorFile(errorFname, rlen);
     }
 
-    private void parseErrorFile(String fname) throws FileNotFoundException, IOException {
+
+    private int[] parseLine(String line){
+        //turns a tab spaced line into an int array
+        String parts[] = line.split("\\s");
+        int i;
+        int[] res = new int[parts.length];
+        for(i=0;i<parts.length;i++){
+            res[i] = Integer.parseInt(parts[i]);
+        }
+        return res;
+    }
+    private void parseErrorFile(String fname, int rlen) throws FileNotFoundException, IOException {
         BufferedReader fh = new BufferedReader(new FileReader(fname));
         String s;
-        int rlen = 0;
-        //Get the read length
-        while ((s = fh.readLine()) != null) {
-            if (!StringUtil.isBlankOrComment(s)) {
-                rlen = Integer.parseInt(s);
-                break;
-            }
-        }
-        if (rlen <= 0) {
-            throw new IOException("Invalid read length: " + Integer.toString(rlen));
-        }
 
         //now that we have the length lets allocate our storage
 
-        mpA = new float[rlen][3];
-        mpC = new float[rlen][3];
-        mpG = new float[rlen][3];
-        mpT = new float[rlen][3];
-        qhA = new ArrayList<float[]>(rlen);
-        qhC = new ArrayList<float[]>(rlen);
-        qhG = new ArrayList<float[]>(rlen);
-        qhT = new ArrayList<float[]>(rlen);
+        mpA = new int[rlen][62][6]; //61 phred scores + sum and 5 ints + sum + vert_cumsum
+        mpC = new int[rlen][62][6];
+        mpG = new int[rlen][62][6];
+        mpT = new int[rlen][62][6];
 
-
+        int pos = 0;
         //read the mutation spectrum
-        int i = 0;
-        while (((s = fh.readLine()) != null) && (i < rlen)) {
+        while (((s = fh.readLine()) != null) && (pos < rlen)) {
             if (!StringUtil.isBlankOrComment(s)) {
-                String parts[] = s.split("\\s");
-                float total = sumWords(parts, 1, 4);
-                mpA[i][0] = Float.parseFloat(parts[1]) / total;
-                for (int j = 1; j < 3; j++) {
-                    mpA[i][j] = mpA[i][j - 1] + Float.parseFloat(parts[j + 1]) / total;
+                int parts[] = parseLine(s);
+                pos = parts[0];
+                int phred = parts[1];
+                if (phred > 60) throw new IOException("Phred score: "+Integer.toString(phred)+" in error profile is greater than 60!");
+                int i = 2;
+           
+                mpA[pos][phred][0] = parts[2];
+                for (int j = 1; j < 5; j++) {
+                    mpA[pos][phred][j] = mpA[pos][phred][j - 1] + parts[j + 2];
                 }
-                total = sumWords(parts, 4, 7);
-                mpC[i][0] = Float.parseFloat(parts[4]) / total;
-                for (int j = 1; j < 3; j++) {
-                    mpC[i][j] = mpC[i][j - 1] + Float.parseFloat(parts[j + 4]) / total;
+                mpA[pos][phred][5] = sum(parts, i, i+5);//total
+                mpA[pos][61][6] += mpA[pos][phred][5];//increment total phred for this pos
+
+                
+                mpC[pos][phred][0] = parts[7];
+                for (int j = 1; j < 5; j++) {
+                    mpC[pos][phred][j] = mpC[pos][phred][j - 1] + parts[j + 7];
                 }
-                total = sumWords(parts, 7, 10);
-                mpG[i][0] = Float.parseFloat(parts[7]) / total;
-                for (int j = 1; j < 3; j++) {
-                    mpG[i][j] = mpG[i][j - 1] + Float.parseFloat(parts[j + 7]) / total;
+                mpC[pos][phred][5] = sum(parts, 7, 12);//total
+                mpC[pos][61][6] += mpC[pos][phred][5];//increment total phred for this pos
+
+                mpG[pos][phred][0] = parts[12];
+                for (int j = 1; j < 5; j++) {
+                    mpG[pos][phred][j] = mpG[pos][phred][j - 1] + parts[j + 12];
                 }
-                total = sumWords(parts, 10, 13);
-                mpT[i][0] = Float.parseFloat(parts[10]) / total;
-                for (int j = 1; j < 3; j++) {
-                    mpT[i][j] = mpT[i][j - 1] + Float.parseFloat(parts[j + 10]) / total;
+                mpG[pos][phred][5] = sum(parts, 12, 17);//total
+                mpG[pos][61][6] += mpG[pos][phred][5];//increment total phred for this pos
+
+                mpT[pos][phred][0] = parts[17];
+                for (int j = 1; j < 5; j++) {
+                    mpT[pos][phred][j] = mpT[pos][phred][j - 1] + parts[j + 17];
                 }
-                i++;
+                mpT[pos][phred][5] = sum(parts, 17, 22);//total
+                mpT[pos][61][6] += mpT[pos][phred][5];//increment total phred for this pos
             }
         }//done with mutation spectrum
 
-        //read and allocate the mutation histogram
-        i = 0;
-        while (((s = fh.readLine()) != null) && (i < (rlen * 4))) {
-            if (!StringUtil.isBlankOrComment(s)) {
-
-                String[] parts = s.split("\\s");
-                char base = parts[1].charAt(0);
-                String[] hist = parts[3].split(",");
-                int[] phred = new int[hist.length];
-                int[] counts = new int[hist.length];
-                for (int j = 0; j < hist.length; j++) {
-                    String[] tmp = hist[j].split(":");
-                    phred[j] = Integer.parseInt(tmp[0]);
-                    counts[j] = Integer.parseInt(tmp[1]);
-                }
-                int maxPhred = phred[phred.length - 1];
-                float[] cumProb = new float[maxPhred + 1];
-                int total = sum(counts);
-                for (int j = 0; j < phred.length; j++) {
-                    cumProb[phred[j]] = ((float) counts[j]) / total;
-                }
-                for (int j = 1; j < cumProb.length; j++) {
-                    cumProb[j] += cumProb[j - 1];
-                }
-                switch (Character.toUpperCase(base)) {
-                    case 'A':
-                        qhA.add(cumProb);
-                        break;
-                    case 'C':
-                        qhC.add(cumProb);
-                        break;
-                    case 'G':
-                        qhG.add(cumProb);
-                        break;
-                    case 'T':
-                        qhT.add(cumProb);
-                        break;
-                    default:
-                        throw new IOException("Bad base in error distribution ");
-                }
-
-
-
+        //calculate the cumulative count of each occurance
+        for(int i = 0; i < rlen; i++){
+            mpA[i][0][6] = mpA[i][0][5];
+            mpC[i][0][6] = mpC[i][0][5];
+            mpG[i][0][6] = mpG[i][0][5];
+            mpT[i][0][6] = mpT[i][0][5];
+            for(int j = 1;j <= 60; j++){
+                mpA[i][j][6] = mpA[i][j][5]+mpA[i][j-1][6];
+                mpC[i][j][6] = mpC[i][j][5]+mpC[i][j-1][6];
+                mpT[i][j][6] = mpT[i][j][5]+mpT[i][j-1][6];
+                mpG[i][j][6] = mpG[i][j][5]+mpG[i][j-1][6];
             }
         }
     }
 
-    private int sum(int[] a) {
+    private int sum(int[] a, int from, int to) {
         int total = 0;
-        for (int i = 0; i < a.length; i++) {
+        for (int i = from; i < to; i++) {
             total += a[i];
         }
         return total;
     }
+
+
 
     public void AddErrorRead(SamRecord rec) {
 
@@ -160,49 +135,49 @@ public class AddError {
 
         //Now add error to the sequence returning the modified sequence
         for (int i = 0; i < seq.length(); i++) {
-            float[] qhp = null;
-            float[] mpp = null;
+            int[][] mpp = null;
             switch (Character.toUpperCase(seq.charAt(i))) {
                 case 'A':
-                    qhp = qhA.get(i);
                     mpp = mpA[i];
                     break;
                 case 'C':
-                    qhp = qhC.get(i);
                     mpp = mpC[i];
                     break;
                 case 'G':
-                    qhp = qhG.get(i);
                     mpp = mpG[i];
                     break;
                 case 'T':
-                    qhp = qhT.get(i);
                     mpp = mpT[i];
                     break;
                 default:
-                    qhp = null;
                     mpp = null;
                     break;
             }//end switch
-
-            if (qhp != null && mpp != null) {
-                float rf = rand.nextFloat();
-                for (int k = 0; k < qhp.length; k++) {
-                    if (rf <= qhp[k]) {
-                        score.setCharAt(i, QualityUtil.getPhred33ScoreFromPhredScore(k));
+            if(mpp != null){
+                //choose our phred score
+                int r;
+                r = rand.nextInt(mpp[61][6]);//total for this position
+                int phred = 60;
+                for(int p = 0; p <= 60; p++){
+                    if(r < mpp[p][6]){
+                        phred = p;
                         break;
                     }
-                }// end get score from distribution
-                rf = rand.nextFloat();
-                if (rf <= QualityUtil.getErrorProbabilityFromAscii33PhredScore(score.charAt(i))) {
-                    rf = rand.nextFloat();
-                    for (int k = 0; k < 3; k++) {
-                        if (rf <= mpp[k]) {
-                            seq.sub(i, mutateChar(seq.charAt(i), k));
-                            break;
-                        }
+                }
+
+                //now choose our base given this phred score, ref base, and pos
+                r = rand.nextInt(mpp[phred][5]);
+                int ind = 5;
+                for(int c = 0; c < 5; c++){
+                    if(r < mpp[phred][c]){
+                        ind = c;
+                        break;
                     }
                 }
+                //if(phred33) //for now this is not an option
+                score.setCharAt(i,QualityUtil.getPhred33ScoreFromPhredScore(phred));
+                //else score.setCharAt(i, QualityUtil.getPhred64ScoreFromPhredScore(phred));
+                seq.sub(i, baseIndex(ind));
             } else { //we have an N
                 score.setCharAt(i, QualityUtil.getPhred33ScoreFromPhredScore(0));
             }
@@ -217,52 +192,24 @@ public class AddError {
         //return rec;
     }
 
-    private int sumWords(String[] s, int from, int to) {
-        int total = 0;
-        for (int i = from; i < to; i++) {
-            total += Integer.parseInt(s[i]);
+    private char baseIndex(int i){
+        switch(i){
+            case 0 : return 'A';
+            case 1 : return 'C';
+            case 2 : return 'G';
+            case 3 : return 'T';
+            default: return 'N';
         }
-        return total;
+    }
+    
+    private int indexBase(char c){
+        switch(Character.toUpperCase(c)){
+            case 'A': return 0;
+            case 'C': return 1;
+            case 'G': return 2;
+            case 'T': return 3;
+            default : return 4;
+        }
     }
 
-    private char mutateChar(char ori, int i) {
-        switch (Character.toUpperCase(ori)) {
-            case 'A':
-                switch (i) {
-                    case 0:
-                        return 'C';
-                    case 1:
-                        return 'G';
-                    default:
-                        return 'T';
-                }
-            case 'C':
-                switch (i) {
-                    case 0:
-                        return 'A';
-                    case 1:
-                        return 'G';
-                    default:
-                        return 'T';
-                }
-            case 'G':
-                switch (i) {
-                    case 0:
-                        return 'A';
-                    case 1:
-                        return 'C';
-                    default:
-                        return 'T';
-                }
-            default:
-                switch (i) {
-                    case 0:
-                        return 'A';
-                    case 1:
-                        return 'C';
-                    default:
-                        return 'G';
-                }
-        }
-    }
 }

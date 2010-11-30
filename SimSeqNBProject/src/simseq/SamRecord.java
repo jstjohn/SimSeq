@@ -20,6 +20,7 @@ public class SamRecord {
     public int isize;
     public long seqIndex;
     public String cigar;
+    public String c_cigar; //custom cigar allowing for negative gaps, use for representing chimeric reads
     public String seqHeaderPrefix;
     public String refname;
     public StringBuilderDNA seqLine;

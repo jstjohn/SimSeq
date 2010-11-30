@@ -7,6 +7,7 @@
 #include "fastq.h" //methods for converting phred scores
 #include "dnaLoad.h"
 #include "dnaseq.h"
+#include <stdbool.h>
 
 //static char const rcsid[] = "$Id: newProg.c,v 1.30 2010/03/24 21:18:33 hiram Exp $";
 
@@ -63,10 +64,12 @@ int baseIndex(char base)
     case 'C': return 1;
     case 'G': return 2;
     case 'T': return 3;
+    case 'N': return 4;
     case 'a': return 0;
     case 'c': return 1;
     case 'g': return 2;
     case 't': return 3;
+    case 'n': return 4;
     default: return -1;
     }
 }
@@ -79,74 +82,16 @@ char baseFromIndex(int index)
     case 1: return 'C';
     case 2: return 'G';
     case 3: return 'T';
+    case 4: return 'N';
     default:
       errAbort("Invalid base index %d\n",index);
-      return 'N'; //dummy to make compiler happy
+      return 'N'; //make compiler happy...
     }
 }
 
-char baseFromMutationIndex(int from, int to)
-{
-  switch(from)
-    {
-    case 0:
-      switch (to)
-	{
-	case 0: return 'C';
-	case 1: return 'G';
-	case 2: return 'T';
-	default: return 'N';
-	}
-    case 1:
-      switch (to)
-	{
-	case 0: return 'A';
-	case 1: return 'G';
-	case 2: return 'T';
-	default: return 'N';
-	}
-    case 2:
-      switch (to)
-	{
-	case 0: return 'A';
-	case 1: return 'C';
-	case 2: return 'T';
-	default: return 'N';
-	}
-    case 3:
-      switch (to)
-	{
-	case 0: return 'A';
-	case 1: return 'C';
-	case 2: return 'G';
-	default: return 'N';
-	}
-    default: return 'N';
-    }
 
-}
 
-int mutationIndex(char from, char to)
-{
-  to = toupper(to);
-  switch(toupper(from))
-    {
-    case 'A': return baseIndex(to)-1;
-    case 'C':
-      if (to == 'A') return 0;
-      else return baseIndex(to)-1;
-    case 'G':
-      if (to == 'T')
-	return baseIndex(to)-1;
-      else return baseIndex(to);
-    case 'T':
-      return baseIndex(to);
-    default: 
-      errAbort("Invalid 'from' base %c\n",from);
-      return -1;
-    }
 
-}
 
 char *strrev(char *s,int n)
 {
@@ -163,6 +108,26 @@ char *strrev(char *s,int n)
   return s;
 }
 
+bool invalid(char c){
+  //check that c is in A C G T
+  switch(toupper(c)){
+  case 'A': return false;
+  case 'C': return false;
+  case 'G': return false;
+  case 'T': return false;
+  default: return true;
+  }
+}
+
+bool hasAny(long long int ** c){
+  int i,j;
+  for(i=0;i<4;i++){
+    for(j=0;j<5;j++){
+      if(c[i][j] > 0) return true;
+    }
+  }
+  return false;
+}
 
 void getErrorProfile()
 /* getErrorProfile - Generate the error profile given a bam alignment reference. */
@@ -188,17 +153,18 @@ void getErrorProfile()
   //char *line = NULL;
   char *words[12];
   int i,j,k;
-  unsigned long long *** phred = (unsigned long long ***)needMem(sizeof(unsigned long long **)*readLen);//will hold a position specific hist
-  unsigned long long *** mutation = (unsigned long long ***)needMem(sizeof(unsigned long long **)*readLen);//will hold a position specific hist
+  //For every position store the off diagonal substitution matrix + the frequency of shifting to N
+  unsigned long long **** mutation = (unsigned long long ***)needMem(sizeof(unsigned long long **)*readLen);//will hold a position specific hist
   for(i=0;i<readLen;i++)
     {
-      phred[i] = (unsigned long long **)needMem(sizeof(unsigned long long*) * 4); //phred scores range from 0-93
-      mutation[i] = (unsigned long long **)needMem(sizeof(unsigned long long*) *4);
-      for(j=0;j<4;j++)
-	{
-	  phred[i][j] = (unsigned long long *)needLargeZeroedMem(sizeof(unsigned long long) * 94); //phred scores range from 0-93
-	  mutation[i][j] = (unsigned long long *)needLargeZeroedMem(sizeof(unsigned long long) * 3); //3 bases each can change to
+      
+      mutation[i] = (unsigned long long ***)needMem(sizeof(unsigned long long**) *61); //quality scores could range from 0-60
+      for(j=0;j<=60;j++){
+	mutation[i][j] = (unsigned long long **)needMem(sizeof(unsigned long long *)*4); //4 reference bases
+	for(k=0;k<4;k++){
+	  mutation[i][j][k] = (unsigned long long *)needMem(sizeof(unsigned long long)*5); //|{A,C,G,T,N}| = 5 possible read bases
 	}
+      }
     }
   unsigned int junk = 0;
   //chr2_485_762_0:0:0_0:0:0_1619fe	99	chr1	10022	1	76M	=	10044	98	CCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCT	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	XT:A:R	NM:i:0	SM:i:0	AM:i:0	X0:i:412	XM:i:0	XO:i:0	XG:i:0	MD:Z:76
@@ -227,14 +193,12 @@ void getErrorProfile()
 	      refChar = toupper(ref->dna[leftPos+i]);
 	      //else refChar = complementSingle(ref->dna[leftPos+readLen-1-i]);
 	      readChar = toupper(seq[i]);
-	      if (refChar == 'N' || readChar == 'N') continue; //skip N's
+	      if(invalid(refChar)) continue; //skip non-nucleotides in the reference
 	      //handle phred histogram
 	      if (phred33) pscore = phred33ToPhred(score[i]);
 	      else if (phred64) pscore = phred64ToPhred(score[i]);
-	      phred[i][baseIndex(readChar)][pscore]++; //increment hist
-	      //handle mutation index
-	      if (refChar != readChar)
-		mutation[i][baseIndex(refChar)][mutationIndex(refChar,readChar)]++;
+
+	      mutation[i][pscore][baseIndex(refChar)][baseIndex(readChar)]++;
 	    } //loop over read length
 	}
       else
@@ -249,13 +213,12 @@ void getErrorProfile()
 	      refChar = toupper(ref->dna[leftPos+i]);
 	      readChar = toupper(seq[pos]);
 
-	      if (refChar == 'N' || readChar == 'N') continue; //skip N's
+	      if(invalid(refChar)) continue; //skip non-nucleotides in the reference
 
 	      if (phred33) pscore = phred33ToPhred(score[pos]);
 	      else if (phred64) pscore = phred64ToPhred(score[pos]);
-	      phred[i][baseIndex(complementSingle(readChar))][pscore]++; //increment hist for sequenced base
-	      if (refChar != readChar)
-		mutation[i][baseIndex(complementSingle(refChar))][mutationIndex(complementSingle(refChar),complementSingle(readChar))]++; //increment for sequenced error
+
+	      mutation[i][pscore][baseIndex(complementSingle(refChar))][baseIndex(complementSingle(readChar))]++; //increment for sequenced error
 
 	    }
 
@@ -266,56 +229,21 @@ void getErrorProfile()
 
     }//end while
 
-  //print out the read file.
-  /**
-   * The error profile will have to be interesting
-   * We need a position specific mutation spectrum
-   * and a position specific quality histogram.
-   *
-   * The First line of the file should specify the number of positions
-   * of reads.
-   *
-   * The mutation spectrum should be on a single line for each position
-   * A line will be the integer number of observances of each error type.
-   * It should be in order representing a 4x4 [A,C,G,T] matrix read
-   * across rows from top left to bottom right. Thus the numbers will
-   * be [a->c,a->g,a->t,c->a,c->g,c->t,...]. For simplicity these numbers
-   * will be tab delineated. The first number on each line will be the
-   * position [0,...,n].
-   *
-   * The Quality histogram will be harder to parse because there could be
-   * quite a few quality values in the histogram, and the number of those
-   * values could vary based on base and position.
-   * Position\tBase\tNumber(N)\tItem1:Count1,...,ItemN:CountN
-   **/
-  printf("#Number of reads:\n");
-  printf("%d\n\n",readLen);
-  printf("#Mutation Spectrum:\n");
-  for(i=0;i<readLen;i++)
-    {
-      printf("%d",i);
-      for(j=0;j<4;j++)
-	{
-	  for(k=0;k<3;k++)
-	    printf("\t%llu", mutation[i][j][k]);
+  //print out the error histogram file.
+  printf("#Pos\tPhred\tA->A\tA->C\tA->G\tA->T\tA->N\tC->A\tC->C\tC->G\tC->T\tC->N\tG->A\tG->C\tG->G\tG->T\tG->N\tT->A\tT->C\tT->G\tT->T\tT->N\n");
+  int p;
+  for(i=0;i<readLen;i++){
+      for(p=0;p<=60;p++){
+	if(hasAny(mutation[i][p])){ //if there are any phred scores to report here...
+	  printf("%d\t%d",i,p); //print pos\tphred
+	  for(j=0;j<4;j++){
+	    for(k=0;k<5;k++)
+	      printf("\t%llu", mutation[i][p][j][k]);
+	  }
+	  printf("\n");
 	}
-      printf("\n");
-    }
-  printf("\n#Quality Histograms:\n");
-  for(i=0;i<readLen;i++)
-    {
-      for(j=0;j<4;j++)
-	{
-	  unsigned int nonZero[94];
-	  int count = 0;
-	  for(k=0;k<94;k++)
-	    if(phred[i][j][k] != 0)
-	      nonZero[count++] = k;
-	  printf("%d\t%c\t%d\t",i,baseFromIndex(j),count);
-	  for(k=0;k<count-1;k++) printf("%d:%llu,",nonZero[k],phred[i][j][nonZero[k]]);
-	  printf("%d:%llu\n",nonZero[count-1],phred[i][j][nonZero[count-1]]); //last element no comma
-	}
-    }
+      }
+  }
   printf("\n\n");
 }
 
