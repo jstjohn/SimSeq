@@ -50,10 +50,10 @@ public class AddError {
 
         //now that we have the length lets allocate our storage
 
-        mpA = new int[rlen][62][6]; //61 phred scores + sum and 5 ints + sum + vert_cumsum
-        mpC = new int[rlen][62][6];
-        mpG = new int[rlen][62][6];
-        mpT = new int[rlen][62][6];
+        mpA = new int[rlen][62][7]; //61 phred scores + sum and 5 ints + sum + vert_cumsum
+        mpC = new int[rlen][62][7];
+        mpG = new int[rlen][62][7];
+        mpT = new int[rlen][62][7];
 
         int pos = 0;
         //read the mutation spectrum
