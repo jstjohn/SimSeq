@@ -175,6 +175,7 @@ void getErrorProfile()
       struct dnaSeq *ref = NULL;
       char *score = words[10];
       char *chrom = words[2];
+      unsigned int pseudo = 1; //pseudo count to give to all non N characters with at least one phred score in the sequence
       int leftPos = atoi(words[3])-1; //0 based left most position
       int flag = atoi(words[1]);
       int strand_mask = 16;//10000 in binary
@@ -197,7 +198,14 @@ void getErrorProfile()
 	      //handle phred histogram
 	      if (phred33) pscore = phred33ToPhred(score[i]);
 	      else if (phred64) pscore = phred64ToPhred(score[i]);
-
+	      if(mutation[i][pscore][0][0] < pseudo){ //add in pseudocounts for everything other than N
+		int tmp1,tmp2;
+		for(tmp1=0;tmp1<4;tmp1++){
+		  for(tmp2=0;tmp2<4;tmp2++){
+		    mutation[i][pscore][tmp1][tmp2]=pseudo;
+		  }
+		}
+	      }
 	      mutation[i][pscore][baseIndex(refChar)][baseIndex(readChar)]++;
 	    } //loop over read length
 	}
@@ -214,9 +222,18 @@ void getErrorProfile()
 	      readChar = toupper(seq[pos]);
 
 	      if(invalid(refChar)) continue; //skip non-nucleotides in the reference
-
+	      
 	      if (phred33) pscore = phred33ToPhred(score[pos]);
 	      else if (phred64) pscore = phred64ToPhred(score[pos]);
+
+	      if(mutation[i][pscore][0][0] < pseudo){ //add in pseudocounts for everything other than N, haven't done this already
+		int tmp1,tmp2;
+		for(tmp1=0;tmp1<4;tmp1++){
+		  for(tmp2=0;tmp2<4;tmp2++){
+		    mutation[i][pscore][tmp1][tmp2]=pseudo;
+		  }
+		}
+	      }
 
 	      mutation[i][pscore][baseIndex(complementSingle(refChar))][baseIndex(complementSingle(readChar))]++; //increment for sequenced error
 
