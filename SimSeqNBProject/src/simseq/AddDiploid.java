@@ -22,8 +22,9 @@ public class AddDiploid {
         readDiploid(dipFname);
     }
     public void AddDiploidRead(SamRecord rec){
-        
+        //DUMMY METHOD, currently not implemented...
     }
+
     private void readDiploid(String dipfName) throws IOException {
         hmp = new HashMap<String, HashMap<Integer, Character>>(22);
         BufferedReader fh = new BufferedReader(new FileReader(dipfName));

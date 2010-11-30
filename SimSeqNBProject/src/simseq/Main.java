@@ -20,7 +20,7 @@ import org.apache.commons.cli.PosixParser;
  * @author john
  */
 public class Main{
-    private static String lastUpdate = "11.26.2010";
+    private static String lastUpdate = "11.29.2010";
     /**
      * @param args the command line arguments
      */
@@ -46,6 +46,7 @@ public class Main{
             //OPTIONAL ARGS
             options.addOption("d", "dip", true, "If diploid data desired, path to diploid file. (format: chrom pos(0 based) altChar");
             options.addOption("e", "error", true, "If simulated read error desired, path to read error file.");
+            options.addOption(null, "error2", true, "If you desire a seperate error distribution to be applied to the second read, then provide a path to that error profile with this option");
             options.addOption("p", "read_prefix", true, "Prefix for simulated reads. Default: "+def_read_prefix);
             options.addOption("1", "read1_length", true, "Integer length of first read. Default: "+def_read_len);
             options.addOption("2", "read2_length", true, "Integer length of second read. Default: "+def_read_len);
@@ -85,11 +86,18 @@ public class Main{
             boolean debug = cmd.hasOption("debug");
             AddDiploid dadd = null;
             AddError eadd = null;
+            AddError eadd2 = null;
             if(cmd.hasOption('d')){
+                System.err.println("WARNING: diploid sites addition is not currently implemented");
                 dadd = new AddDiploid(cmd.getOptionValue('d'),debug);
             }
             if(cmd.hasOption('e')){
                 eadd = new AddError(cmd.getOptionValue('e'),debug);
+            }
+            if(cmd.hasOption("error2")){
+                if(eadd == null)
+                    throw new ParseException("You must supply an error file with '-e' or '--error' if you also want to supply '--error2'");
+                eadd2 = new AddError(cmd.getOptionValue("error2"),debug);
             }
             SamWriter swrite = new SamWriter(out);
             //get seq length
@@ -190,9 +198,12 @@ public class Main{
                             sr1.qualLine = new StringBuilder(tmpqual1);
                             sr2.seqLine = new StringBuilderDNA(tmpseq2);
                             sr2.qualLine = new StringBuilder(tmpqual2);
-                            if(eadd != null){
+                            if(eadd != null && eadd2 == null){
                                 eadd.AddErrorRead(sr1);
                                 eadd.AddErrorRead(sr2);
+                            }else if(eadd2 != null){
+                                eadd.AddErrorRead(sr1);
+                                eadd2.AddErrorRead(sr2);
                             }
                             swrite.write(sr1);
                             swrite.write(sr2);
@@ -264,9 +275,12 @@ public class Main{
                             sr1.qualLine = new StringBuilder(tmpqual1);
                             sr2.seqLine = new StringBuilderDNA(tmpseq2);
                             sr2.qualLine = new StringBuilder(tmpqual2);
-                            if(eadd != null){
+                            if(eadd != null && eadd2 == null){
                                 eadd.AddErrorRead(sr1);
                                 eadd.AddErrorRead(sr2);
+                            }else if(eadd2 != null){
+                                eadd.AddErrorRead(sr1);
+                                eadd2.AddErrorRead(sr2);
                             }
                             swrite.write(sr1);
                             swrite.write(sr2);
