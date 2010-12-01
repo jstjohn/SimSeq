@@ -61,6 +61,7 @@ public class AddError {
             if (!StringUtil.isBlankOrComment(s)) {
                 int parts[] = parseLine(s);
                 pos = parts[0];
+                if (pos >= rlen) break;
                 int phred = parts[1];
                 if (phred > 60) throw new IOException("Phred score: "+Integer.toString(phred)+" in error profile is greater than 60!");
                 int i = 2;
