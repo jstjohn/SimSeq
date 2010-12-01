@@ -20,7 +20,7 @@ import org.apache.commons.cli.PosixParser;
  * @author john
  */
 public class Main{
-    private static String lastUpdate = "11.29.2010";
+    private static String lastUpdate = "12.1.2010";
     /**
      * @param args the command line arguments
      */
