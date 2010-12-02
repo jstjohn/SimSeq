@@ -218,7 +218,7 @@ void getErrorProfile()
 	      //pos stores the true readLen - (true-desired) index, this gets us the end of a read
 	      ref = hashFindVal(refHash, chrom);
 	      if(!ref) errAbort("Sequence name %s not found in reference\n",chrom);
-	      refChar = toupper(ref->dna[leftPos+i]);
+	      refChar = toupper(ref->dna[leftPos+pos]);
 	      readChar = toupper(seq[pos]);
 
 	      if(invalid(refChar)) continue; //skip non-nucleotides in the reference
