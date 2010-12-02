@@ -22,14 +22,14 @@ public class AddError {
     private int[][][] mpG;
     private int[][][] mpT;
     private Random rand = new Random();
-    //private boolean phred33;
+    private boolean phred33;
 
-    public AddError(String errorFname, int rlen, boolean debug) throws IOException {
+    public AddError(String errorFname, int rlen, boolean phred_33, boolean debug) throws IOException {
         /*
          * Constructor, simply read in the error file and get ready to
          * add error to any reads that come by.
          */
-        //phred33 = phred_33; //for now this is not an option
+        phred33 = phred_33; //for now this is not an option
         parseErrorFile(errorFname, rlen);
     }
 
@@ -175,9 +175,8 @@ public class AddError {
                         break;
                     }
                 }
-                //if(phred33) //for now this is not an option
-                score.setCharAt(i,QualityUtil.getPhred33ScoreFromPhredScore(phred));
-                //else score.setCharAt(i, QualityUtil.getPhred64ScoreFromPhredScore(phred));
+                if(phred33) score.setCharAt(i,QualityUtil.getPhred33ScoreFromPhredScore(phred));
+                else score.setCharAt(i, QualityUtil.getPhred64ScoreFromPhredScore(phred));
                 seq.sub(i, baseIndex(ind));
             } else { //we have an N
                 score.setCharAt(i, QualityUtil.getPhred33ScoreFromPhredScore(0));

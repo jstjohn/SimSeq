@@ -58,6 +58,7 @@ public class Main{
             options.addOption(null,"mate_frag",true, "If using a mate-pair library, what is your desired loop fragmentation size? Default: "+def_mate_sheer_mean);
             options.addOption(null,"mate_frag_stdev",true,"If using a mate-pair library, what is your desired loop fragmentation size standard deviation? Default: "+def_mate_sheer_stdev);
             options.addOption(null,"mate_pulldown_error_p",true, "If using a mate-pair library, what is the probability that a read does not include the biotin marker? Default: "+def_mate_non_biotin_pulldown_p);
+            options.addOption(null,"phred64",false,"Output phred+64 quality string rather than phred+33");
             options.addOption("h", "help",false,"Print this usage message.");
             options.addOption(null,"debug",false,"Write debug info to stderr.");
             CommandLineParser parser = new PosixParser();
@@ -87,19 +88,21 @@ public class Main{
             AddDiploid dadd = null;
             AddError eadd = null;
             AddError eadd2 = null;
+            boolean phred33 = true;
+            if(cmd.hasOption("phred64"))phred33=false;
             if(cmd.hasOption('d')){
                 System.err.println("WARNING: diploid sites addition is not currently implemented");
                 dadd = new AddDiploid(cmd.getOptionValue('d'),debug);
             }
             if(cmd.hasOption("error") && !cmd.hasOption("error2")){
-                eadd = new AddError(cmd.getOptionValue('e'),Math.max(read1_length, read2_length),debug);
+                eadd = new AddError(cmd.getOptionValue('e'),Math.max(read1_length, read2_length),phred33,debug);
             }
             else if(cmd.hasOption("error2"))
             {
                 if(!cmd.hasOption("error"))
                     throw new ParseException("You must supply an error file with '-e' or '--error' if you also want to supply '--error2'");
-                eadd = new AddError(cmd.getOptionValue("error"),read1_length,debug);
-                eadd2 = new AddError(cmd.getOptionValue("error2"),read2_length,debug);
+                eadd = new AddError(cmd.getOptionValue("error"),read1_length,phred33,debug);
+                eadd2 = new AddError(cmd.getOptionValue("error2"),read2_length,phred33,debug);
             }
             SamWriter swrite = new SamWriter(out);
             //get seq length
