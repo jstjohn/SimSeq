@@ -98,6 +98,8 @@ public class AddError {
         }//done with mutation spectrum
 
         //calculate the cumulative count of each occurance
+        //for all positions, calculate the cumulative count of observations
+        //under each phred score
         for(int i = 0; i < rlen; i++){
             mpA[i][0][6] = mpA[i][0][5];
             mpC[i][0][6] = mpC[i][0][5];
@@ -179,7 +181,8 @@ public class AddError {
                 else score.setCharAt(i, QualityUtil.getPhred64ScoreFromPhredScore(phred));
                 seq.sub(i, baseIndex(ind));
             } else { //we have an N
-                score.setCharAt(i, QualityUtil.getPhred33ScoreFromPhredScore(0));
+                if(phred33)score.setCharAt(i, QualityUtil.getPhred33ScoreFromPhredScore(0));
+                else score.setCharAt(i, QualityUtil.getPhred64ScoreFromPhredScore(0));
             }
         }
 

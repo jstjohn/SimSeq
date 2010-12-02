@@ -177,14 +177,14 @@ void getErrorProfile()
       char *chrom = words[2];
       unsigned int pseudo = 1; //pseudo count to give to all non N characters with at least one phred score in the sequence
       int leftPos = atoi(words[3])-1; //0 based left most position
-      int flag = atoi(words[1]);
-      int strand_mask = 16;//10000 in binary
+      unsigned int flag = atoi(words[1]);
+      unsigned int strand_mask = 16;//0x10 in hex
       //int paired_mask = 1;
       char refChar;
       char readChar;
       unsigned pscore = 0;
       unsigned pos = strlen(seq); 
-      int forward = flag & strand_mask; //bit mask everything other than 0x0010
+      unsigned int forward = flag & strand_mask; //bit mask everything other than 0x0010
       if (forward)
 	{
 	  for(i=0;i<readLen;i++)

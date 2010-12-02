@@ -35,6 +35,7 @@ public class SamRecord {
         this.first = first_read;
         this.second = ! this.first;
         this.paired = true;
+        this.proper_pair = true;
         this.seqLine = new StringBuilderDNA(dummyseq);
         this.qualLine = new StringBuilder(dummyqual);
     }
@@ -50,15 +51,15 @@ public class SamRecord {
     }
     public int getFlag(){
         int                     flag  = 0;
-        if(paired)              flag |= 0x001;
-        if(proper_pair)         flag |= 0x002;
-        if(query_unmapped)      flag |= 0x004;
-        if(mate_unmapped)       flag |= 0x008;
-        if(query_reverse_strand)flag |= 0x0010;
-        if(mate_reverse_strand) flag |= 0x0020;
-        if(first)               flag |= 0x0040;
-        if(second)              flag |= 0x0080;
-        if(duplicate)           flag |= 0x0400;
+        if(paired)              flag |= 0x1;
+        if(proper_pair)         flag |= 0x2;
+        if(query_unmapped)      flag |= 0x4;
+        if(mate_unmapped)       flag |= 0x8;
+        if(query_reverse_strand)flag |= 0x10;
+        if(mate_reverse_strand) flag |= 0x20;
+        if(first)               flag |= 0x40;
+        if(second)              flag |= 0x80;
+        if(duplicate)           flag |= 0x400;
         return flag;
     }
 }
