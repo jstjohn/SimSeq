@@ -211,7 +211,7 @@ void getErrorProfile()
 	}
       else
 	{ //sequence and score are complemented and/or reversed
-	  for(i=readLen-1; i >= 0; i--)
+	  for(i=0; i <readLen ; i++)
 	    {
 	      --pos; //start at last index + 1, decrement at beginning
 	      //i stores the 0- desired readlen index
