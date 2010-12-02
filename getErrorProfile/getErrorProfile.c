@@ -178,38 +178,14 @@ void getErrorProfile()
       unsigned int pseudo = 1; //pseudo count to give to all non N characters with at least one phred score in the sequence
       int leftPos = atoi(words[3])-1; //0 based left most position
       unsigned int flag = atoi(words[1]);
-      unsigned int strand_mask = 16;//0x10 in hex
+      unsigned int rev_mask = 16;//0x10 in hex
       //int paired_mask = 1;
       char refChar;
       char readChar;
       unsigned pscore = 0;
       unsigned pos = strlen(seq); 
-      unsigned int forward = flag & strand_mask; //bit mask everything other than 0x0010
-      if (forward)
-	{
-	  for(i=0;i<readLen;i++)
-	    {
-	      ref = hashFindVal(refHash, chrom);
-	      if(!ref) errAbort("Sequence name %s not found in reference\n",chrom);
-	      refChar = toupper(ref->dna[leftPos+i]);
-	      //else refChar = complementSingle(ref->dna[leftPos+readLen-1-i]);
-	      readChar = toupper(seq[i]);
-	      if(invalid(refChar)) continue; //skip non-nucleotides in the reference
-	      //handle phred histogram
-	      if (phred33) pscore = phred33ToPhred(score[i]);
-	      else if (phred64) pscore = phred64ToPhred(score[i]);
-	      if(mutation[i][pscore][0][0] < pseudo){ //add in pseudocounts for everything other than N
-		int tmp1,tmp2;
-		for(tmp1=0;tmp1<4;tmp1++){
-		  for(tmp2=0;tmp2<4;tmp2++){
-		    mutation[i][pscore][tmp1][tmp2]=pseudo;
-		  }
-		}
-	      }
-	      mutation[i][pscore][baseIndex(refChar)][baseIndex(readChar)]++;
-	    } //loop over read length
-	}
-      else
+      unsigned int reverse = flag & rev_mask; //bit mask everything other than 0x0010
+      if (reverse) //0 for forward, 1 for reverse
 	{ //sequence and score are complemented and/or reversed
 	  for(i=0; i <readLen ; i++)
 	    {
@@ -234,14 +210,32 @@ void getErrorProfile()
 		  }
 		}
 	      }
-
 	      mutation[i][pscore][baseIndex(complementSingle(refChar))][baseIndex(complementSingle(readChar))]++; //increment for sequenced error
-
 	    }
-
-
-
-
+	}
+      else
+	{
+	  for(i=0;i<readLen;i++)
+	    {
+	      ref = hashFindVal(refHash, chrom);
+	      if(!ref) errAbort("Sequence name %s not found in reference\n",chrom);
+	      refChar = toupper(ref->dna[leftPos+i]);
+	      //else refChar = complementSingle(ref->dna[leftPos+readLen-1-i]);
+	      readChar = toupper(seq[i]);
+	      if(invalid(refChar)) continue; //skip non-nucleotides in the reference
+	      //handle phred histogram
+	      if (phred33) pscore = phred33ToPhred(score[i]);
+	      else if (phred64) pscore = phred64ToPhred(score[i]);
+	      if(mutation[i][pscore][0][0] < pseudo){ //add in pseudocounts for everything other than N
+		int tmp1,tmp2;
+		for(tmp1=0;tmp1<4;tmp1++){
+		  for(tmp2=0;tmp2<4;tmp2++){
+		    mutation[i][pscore][tmp1][tmp2]=pseudo;
+		  }
+		}
+	      }
+	      mutation[i][pscore][baseIndex(refChar)][baseIndex(readChar)]++;
+	    } //loop over read length
 	}
 
     }//end while

@@ -46,7 +46,7 @@ public class AddError {
 
         //now that we have the length lets allocate our storage
 
-        mp = new int[rlen][62][4][7]; //61 phred scores + sum, 4 ref bases, 5 subst bases + sum + vert_cumsum
+        mp = new int[rlen][61][4][6]; //61 phred scores, 4 ref bases, 5 subst bases + vert_cumsum
 
         int pos = 0;
         //read the mutation spectrum
@@ -68,33 +68,24 @@ public class AddError {
                         //store the cumulative frequency
                        mp[pos][phred][base][j] = mp[pos][phred][base][j - 1] + parts[j + i];
                     }
-                    mp[pos][phred][base][5] = sum(parts, i, i+5);//total, so we can draw a random between 0 and this to sample from
-                    mp[pos][61][base][6] += mp[pos][phred][base][5];//increment total phred for this pos
                     i+= 5; //increment to the next set of 5 X->A,...,X->N
                 }
             }
-        }//done with mutation spectrum
+        }
 
         //calculate the cumulative count of each occurance
         //for all positions, calculate the cumulative count of observations
         //under each phred score
         for(int i = 0; i < rlen; i++){
             for(int base = 0; base < 4; base++){
-                mp[i][0][base][6] = mp[i][0][base][5];
-                for(int j = 1;j <= 60; j++){              
-                    mp[i][j][base][6] = mp[i][j][base][5]+mp[i][j-1][base][6];
+                mp[i][0][base][5] = mp[i][0][base][4];
+                for(int j = 1;j <= 60; j++){
+                    mp[i][j][base][5] = mp[i][j][base][4]+mp[i][j-1][base][5];
                 }
             }
         }
     }
 
-    private int sum(int[] a, int from, int to) {
-        int total = 0;
-        for (int i = from; i < to; i++) {
-            total += a[i];
-        }
-        return total;
-    }
 
 
 
@@ -111,17 +102,17 @@ public class AddError {
             if(base!=indexBase('N')){
                 //choose our phred score
                 int r;
-                r = rand.nextInt(mp[i][61][base][6]);//total for this position
+                r = rand.nextInt(mp[i][60][base][5]);//total for this position
                 int phred = 60;
                 for(int p = 0; p <= 60; p++){
-                    if(r < mp[i][p][base][6]){
+                    if(r < mp[i][p][base][5]){
                         phred = p;
                         break;
                     }
                 }
 
                 //now choose our base given this phred score, ref base, and pos
-                r = rand.nextInt(mp[i][phred][base][5]);
+                r = rand.nextInt(mp[i][phred][base][4]);
                 int ind = 5;
                 for(int c = 0; c < 5; c++){
                     if(r < mp[i][phred][base][c]){

@@ -177,9 +177,12 @@ public class Main{
                             tmpseq2 = sr2.seqLine.toString();
                             tmpqual2 = sr2.qualLine.toString();
                         }
-                        if(eadd != null){
-                            eadd.AddErrorRead(sr1);
-                            eadd.AddErrorRead(sr2);
+                        if(eadd != null && eadd2 == null){
+                                eadd.AddErrorRead(sr1);
+                                eadd.AddErrorRead(sr2);
+                        }else if(eadd2 != null){
+                                eadd.AddErrorRead(sr1);
+                                eadd2.AddErrorRead(sr2);
                         }
 
                         swrite.write(sr1);
@@ -253,9 +256,12 @@ public class Main{
                             tmpseq2 = sr2.seqLine.toString();
                             tmpqual2 = sr2.qualLine.toString();
                         }
-                        if(eadd != null){
-                            eadd.AddErrorRead(sr1);
-                            eadd.AddErrorRead(sr2);
+                        if(eadd != null && eadd2 == null){
+                                eadd.AddErrorRead(sr1);
+                                eadd.AddErrorRead(sr2);
+                        }else if(eadd2 != null){
+                                eadd.AddErrorRead(sr1);
+                                eadd2.AddErrorRead(sr2);
                         }
 
                         swrite.write(sr1);
