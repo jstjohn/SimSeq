@@ -1,3 +1,13 @@
+#!/usr/bin/env Rscript
+# Takes an error profile as an argument, then loads it and produces a
+# boxplot figure showing the phred scores by position and reference base
+#
+#Call with `Rscript boxplot_phred_score_figure.R [input filename] [output filename]
+Args <- commandArgs(TRUE) #grab command args
+if(length(Args) != 2){
+  print("Usage: Rscript substitution_frequencies_figure.R input.txt output.[png,pdf,tiff,tex,ps,...]")
+  quit()
+}
 library(reshape)
 library(ggplot2)
 tmp.dat=read.table("test.ori.freqs.tmp")
