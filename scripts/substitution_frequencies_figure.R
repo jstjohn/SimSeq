@@ -5,7 +5,8 @@
 #Call with `Rscript boxplot_phred_score_figure.R [input filename] [output filename]
 Args <- commandArgs(TRUE) #grab command args
 if(length(Args) != 2){
-  print("Usage: Rscript substitution_frequencies_figure.R input.txt output.[png,pdf,tiff,tex,ps,...]")
+  print("Usage: Rscript substitution_frequencies_figure.R input.freqs.txt output.[png,pdf,tiff,tex,ps,...]")
+  print("Use the script 'error_profile_to_subset_freq.py' to generate input.freqs.txt from an error model file")
   quit()
 }
 library(reshape)
@@ -17,3 +18,4 @@ tmp.melted<-melt(tmp.df,id.var=c("Position","Phred"))
 names(tmp.melted)<-c("Position","Phred","Substitution","Frequency")
 tmp.melted$Reference<-substr(tmp.melted$Substitution,1,1)
 qplot(Position,Frequency,data=tmp.melted,color=Substitution,geom="smooth",facets=.~ Reference)
+ggsave(filename=Args[2])
