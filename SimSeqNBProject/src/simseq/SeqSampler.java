@@ -108,18 +108,13 @@ public class SeqSampler{
         sr1.proper_pair = sr2.proper_pair = true;
         
         boolean rev = r.nextBoolean();
-        if(rev){ //set up flags for mp library
-            sr2.query_reverse_strand =
-                sr1.query_reverse_strand =
-                sr1.mate_reverse_strand =
-                sr2.query_reverse_strand =
-                sr2.mate_reverse_strand = true;
-        }else{
-            sr2.query_reverse_strand = 
-                sr1.query_reverse_strand =
-                sr1.mate_reverse_strand =
-                sr2.query_reverse_strand = 
-                sr2.mate_reverse_strand = false;
+        if(rev){ //set up flags for reverse mp library
+            //   <=====2   1======>
+            sr2.query_reverse_strand = sr1.mate_reverse_strand = true;
+            sr1.query_reverse_strand = sr2.mate_reverse_strand = false;
+        }else{ // <=====1   2======>
+            sr2.query_reverse_strand = sr1.mate_reverse_strand = false;
+            sr1.query_reverse_strand = sr2.mate_reverse_strand = true;
         }
         if(shortMate){
             //make surs CIGAR string is for all match (this could still be an SNP)
