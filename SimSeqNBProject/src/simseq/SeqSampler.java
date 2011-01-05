@@ -206,8 +206,9 @@ public class SeqSampler{
 //                }
                 sr1.mpos = sr2.pos;
                 sr2.mpos = sr1.pos;
-                sr1.isize = sr2.pos - sr1.pos;
-                sr2.isize = sr1.pos - sr2.pos;
+                int iSize = l-i;
+                sr1.isize = -1*iSize;
+                sr2.isize = iSize;
             }else{//sample from forward
                 rstart = Math.abs(Math.min(0,i-b-read1_len));
                 sr1.seqLine.replace(rstart,read1_len,seq.substring(p+i-b-read1_len+rstart,p+i-b));
@@ -253,8 +254,11 @@ public class SeqSampler{
 //                }
                 sr1.mpos = sr2.pos;
                 sr2.mpos = sr1.pos;
-                sr1.isize = sr2.pos - sr1.pos;
-                sr2.isize = sr1.pos - sr2.pos;
+                //in sam format the insert size is 5' to 5' end
+                //thus for 
+                int iSize = l-i;
+                sr1.isize = iSize;
+                sr2.isize = -1*iSize;
             }
         }
     }
