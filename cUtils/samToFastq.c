@@ -39,6 +39,7 @@ void usage()
       "\t ==and==\n"
       "\t-read2=FILE\tFile to hold the second reads of a pair. \n"
       "\noptions:\n"
+      "\t-refList=FILE\t Required if using a sam file without a header, use the .fai file made by samtools index for this, or make a file of tab seperated 'ref\tlen' on new lines.\n"
       "\t-noUnmated\tonly print mated reads\n"
       "\t-h, -help\tdisplay this message and exit\n"
       "\t-verbose\tOutput verbose debug messages to stderr.\n\n"
@@ -51,6 +52,7 @@ static struct optionSpec options[] = {
     {"read1",OPTION_STRING},
     {"read2",OPTION_STRING},
     {"single",OPTION_STRING},
+    {"refList",OPTION_STRING},
     {"noUnmated",OPTION_BOOLEAN},
     {"verbose",OPTION_BOOLEAN},
     {"help",OPTION_BOOLEAN},
@@ -148,6 +150,7 @@ int main(int argc, char *argv[])
   char *single = NULL;
   char *read1 = NULL;
   char *read2 = NULL;
+  char *reflist = NULL;
   bool noUnmated = false;
   bool help = false;
   FILE *fs = NULL;
@@ -161,6 +164,7 @@ int main(int argc, char *argv[])
   single = optionVal("single",NULL);
   read1 = optionVal("read1",NULL);
   read2 = optionVal("read2",NULL);
+  reflist = optionVal("refList",NULL);
   if(single==NULL && (read1==NULL || read2==NULL)){
     //must supply single and/or (read1 and read2)
     fprintf(stderr,"must supply single and/or (read1 and read2)\n");
@@ -181,9 +185,9 @@ int main(int argc, char *argv[])
   for(i=1;i<argc;i++){
     samfile_t *fp;
     if(strcasecmp(argv[i]+(strlen(argv[i])-4),"sam")){
-      fp = samopen(argv[i],"r",0);
+      fp = samopen(argv[i],"r",reflist);
     }else{
-      fp = samopen(argv[i],"rb",0);
+      fp = samopen(argv[i],"rb",reflist);
     }
     assert(fp);
     //process the bam file, write output
