@@ -1,0 +1,8 @@
+*.dSYM
+maq2sam-long
+maq2sam-short
+md5sum-lite
+md5fa
+wgsim
+*.o
+

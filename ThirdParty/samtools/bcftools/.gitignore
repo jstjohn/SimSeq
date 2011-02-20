@@ -1,0 +1,4 @@
+bcftools
+*.o
+*.a
+
