@@ -41,6 +41,7 @@ void usage()
       "\t-read2=FILE\tFile to hold the second reads of a pair. \n"
       "\noptions:\n"
       "\t-noUnmated\tonly print mated reads\n"
+      "\t-h, -help\tdisplay this message and exit\n"
       "\t-verbose\tOutput verbose debug messages to stderr.\n\n"
   );
 }//end usage()
@@ -53,6 +54,8 @@ static struct optionSpec options[] = {
     {"single",OPTION_STRING},
     {"noUnmated",OPTION_BOOLEAN},
     {"verbose",OPTION_BOOLEAN},
+    {"help",OPTION_BOOLEAN},
+    {"h",OPTION_BOOLEAN},
     {NULL, 0}
 }; //end options()
 
@@ -147,21 +150,26 @@ int main(int argc, char *argv[])
   char *read1 = NULL;
   char *read2 = NULL;
   bool noUnmated = false;
+  bool help = false;
   FILE *fs = NULL;
   FILE *f1 = NULL;
   FILE *f2 = NULL;
   optionInit(&argc, argv, options);
   verboseOut = optionExists("verbose");
   noUnmated = optionExists("noUnmated");
+  help = (optionExists("h") || optionExists("help"));
+  if(help) usage();
   single = optionVal("single",NULL);
   read1 = optionVal("read1",NULL);
   read2 = optionVal("read2",NULL);
   if(single==NULL && (read1==NULL || read2==NULL)){
     //must supply single and/or (read1 and read2)
-    errAbort("must supply single and/or (read1 and read2)\n");
+    fprintf(stderr,"must supply single and/or (read1 and read2)\n");
+    usage();
   }else if((read1 == NULL && read2 != NULL) || (read2==NULL && read1 != NULL)){
     //must supply both read1 and read2 if either are supplied
-    errAbort("must supply both read1 and read2 if either are supplied\n");
+    fprintf(stderr,"must supply both read1 and read2 if either are supplied\n");
+    usage();
   }
   if(single != NULL){
     fs = fopen(single,"w");
