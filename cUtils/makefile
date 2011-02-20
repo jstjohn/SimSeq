@@ -48,8 +48,8 @@ install: all ../bin
 	-cp samToFastq ../bin
 	-cp faSize ../bin
 
-.c.o: SAMLIB
-	$(CC) $(COPTS) $(CFLAGS) $(SAMINC) $(SAMLD) $< -o $@
+.c.o:
+	$(CC) $(COPTS) $(CFLAGS) $(SAMINC) $< -o $@
 
 clean:
 	-rm $(LIBOBJECTS) $(SAMTOFQO) $(ERRORPROFILEO) $(FASIZEO) samToFastq faSize getErrorProfile
