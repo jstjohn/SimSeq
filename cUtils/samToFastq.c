@@ -41,6 +41,7 @@ void usage()
       "\noptions:\n"
       "\t-refList=FILE\t Required if using a sam file without a header, use the .fai file made by samtools index for this, or make a file of tab seperated 'ref\tlen' on new lines.\n"
       "\t-noUnmated\tonly print mated reads\n"
+      "\t-phred64\t output ascii phred+64 strings rather than ascii phred+33 strings \n"
       "\t-h, -help\tdisplay this message and exit\n"
       "\t-verbose\tOutput verbose debug messages to stderr.\n\n"
   );
@@ -53,6 +54,7 @@ static struct optionSpec options[] = {
     {"read2",OPTION_STRING},
     {"single",OPTION_STRING},
     {"refList",OPTION_STRING},
+    {"phred64",OPTION_BOOLEAN},
     {"noUnmated",OPTION_BOOLEAN},
     {"verbose",OPTION_BOOLEAN},
     {"help",OPTION_BOOLEAN},
@@ -61,7 +63,7 @@ static struct optionSpec options[] = {
 }; //end options()
 
 
-inline void fillFqItem(struct fastqItem *fq, bam1_t *b){
+inline void fillFqItem(struct fastqItem *fq, bam1_t *b, bool phred64){
   bam1_core_t *c;
   c = &b->core;
   if(c->flag & BAM_FREAD1){
@@ -71,13 +73,16 @@ inline void fillFqItem(struct fastqItem *fq, bam1_t *b){
   }else{
     strcpy(fq->id,bam1_qname(b));
   }
-
-  strcpy(fq->score,bam1_qual(b));
   fq->len = c->l_qseq;
   int i;
-  for(i=0;i<c->l_qseq;i++){
-    fq->seq[i] = bam1_seqi(bam1_seq(b), i);
-  }
+  for(i=0;i<c->l_qseq;i++)
+    fq->seq[i] = bam_nt16_rev_table[bam1_seqi(bam1_seq(b), i)];
+  if(phred64)
+    for(i=0;i<c->l_qseq;i++)
+        fq->score[i] = phredToPhred64( (bam1_qual(b))[i] );
+  else
+    for(i=0;i<c->l_qseq;i++)
+      fq->score[i] = phredToPhred33( (bam1_qual(b))[i] );
   fq->seq[c->l_qseq] = '\0';
 
   if(c->flag & BAM_FREVERSE){
@@ -86,7 +91,7 @@ inline void fillFqItem(struct fastqItem *fq, bam1_t *b){
 }
 
 
-void processBamFile(samfile_t *fp, FILE *single, FILE *read1, FILE *read2, bool noUnmated)
+void processBamFile(samfile_t *fp, FILE *single, FILE *read1, FILE *read2, bool noUnmated, bool phred64)
 /*Iterate through all bam reads, a la samtools flagstat, and calculate our stats */
 {
   if(verboseOut)
@@ -111,7 +116,7 @@ void processBamFile(samfile_t *fp, FILE *single, FILE *read1, FILE *read2, bool 
   {
     //are we printing single reads, and pairs?
     if(c->flag & BAM_FSECONDARY) continue; //skip non-primary alignments;
-    fillFqItem(fq,b);
+    fillFqItem(fq,b,phred64);
     if(print_single_file && print_pair_file){
       if(c->flag & BAM_FPAIRED){
         if(c->flag & BAM_FREAD1)
@@ -153,6 +158,7 @@ int main(int argc, char *argv[])
   char *reflist = NULL;
   bool noUnmated = false;
   bool help = false;
+  bool phred64 = false;
   FILE *fs = NULL;
   FILE *f1 = NULL;
   FILE *f2 = NULL;
@@ -165,6 +171,7 @@ int main(int argc, char *argv[])
   read1 = optionVal("read1",NULL);
   read2 = optionVal("read2",NULL);
   reflist = optionVal("refList",NULL);
+  phred64 = optionExists("phred64");
   if(single==NULL && (read1==NULL || read2==NULL)){
     //must supply single and/or (read1 and read2)
     fprintf(stderr,"must supply single and/or (read1 and read2)\n");
@@ -191,7 +198,7 @@ int main(int argc, char *argv[])
     }
     assert(fp);
     //process the bam file, write output
-    processBamFile(fp,fs,f1,f2,noUnmated);
+    processBamFile(fp,fs,f1,f2,noUnmated,phred64);
     samclose(fp);
   }
   if(single != NULL){
