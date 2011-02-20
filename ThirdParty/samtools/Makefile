@@ -29,7 +29,7 @@ all-recur lib-recur clean-recur cleanlocal-recur install-recur:
 			cd $$wdir; \
 		done;
 
-all:lib
+all:lib razip bgzip
 
 .PHONY:all lib clean cleanlocal
 .PHONY:all-recur lib-recur clean-recur cleanlocal-recur install-recur
