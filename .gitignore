@@ -7,4 +7,6 @@ bin/
 *.fastq
 *.fq
 *.tmp
+.project
+.cproject
 
