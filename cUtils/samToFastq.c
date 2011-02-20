@@ -179,7 +179,12 @@ int main(int argc, char *argv[])
   }
   int i;
   for(i=1;i<argc;i++){
-    samfile_t *fp = samopen(argv[i],"rb",0);
+    samfile_t *fp;
+    if(strcasecmp(argv[i]+(strlen(argv[i])-4),"sam")){
+      fp = samopen(argv[i],"r",0);
+    }else{
+      fp = samopen(argv[i],"rb",0);
+    }
     assert(fp);
     //process the bam file, write output
     processBamFile(fp,fs,f1,f2,noUnmated);
