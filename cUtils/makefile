@@ -4,7 +4,7 @@ CFLAGS=-c
 COPTS=-I../ThirdParty/kent/inc -I../inc -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -DMACHTYPE_${MACHTYPE}
 SAMINC=-I../ThirdParty/samtools
 LDFLAGS=-lm
-SAMLD=-L../ThirdParty/samtools -lbam -lz
+SAMLD=-L../ThirdParty/samtools/ -lbam -lz
 FASIZE=faSize.c
 SAMTOFQ=samToFastq.c
 ERRORPROFILE=getErrorProfile.c
@@ -33,7 +33,7 @@ faSize: $(LIBOBJECTS) $(FASIZEO)
 	$(CC) $(COPTS) $(LDFLAGS) $(FASIZEO) $(LIBOBJECTS) -o $@
 
 samToFastq: SAMLIB $(LIBOBJECTS) $(SAMTOFQO)
-	$(CC) $(COPTS) $(SAMINC) $(SAMLD) $(LDFLAGS) $(SAMTOFQO) $(LIBOBJECTS) -o $@
+	$(CC) $(COPTS) $(SAMINC) $(SAMTOFQO) $(LIBOBJECTS) -o $@ $(SAMLD) $(LDFLAGS)
 
 SAMLIB: ../ThirdParty/samtools/libbam.a
 
