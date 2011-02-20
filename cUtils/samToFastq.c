@@ -189,6 +189,13 @@ int main(int argc, char *argv[])
     bam_header_destroy(header);
     bam_close(fp);
   }
+  if(single != NULL){
+      fclose(fs);
+    }
+    if(read1 != NULL){
+      fclose(f1);
+      fclose(f2);
+   }
 
   return 0;
 } //end main()
