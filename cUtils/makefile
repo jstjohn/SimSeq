@@ -33,7 +33,7 @@ faSize: $(LIBOBJECTS) $(FASIZEO)
 	$(CC) $(COPTS) $(LDFLAGS) $(FASIZEO) $(LIBOBJECTS) -o $@
 
 samToFastq: SAMLIB $(LIBOBJECTS) $(SAMTOFQO)
-	$(CC) $(COPTS) $(SAMLD) $(LDFLAGS) $(SAMTOFQO) $(LIBOBJECTS) -o $@
+	$(CC) $(COPTS) $(SAMINC) $(SAMLD) $(LDFLAGS) $(SAMTOFQO) $(LIBOBJECTS) -o $@
 
 SAMLIB: ../ThirdParty/samtools/libbam.a
 
