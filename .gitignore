@@ -1,5 +1,8 @@
+*.a
+*.so
+*.Po
 *.o
-.#*
+*.#*
 bin/
 *.bam
 *.bai
@@ -7,6 +10,7 @@ bin/
 *.fastq
 *.fq
 *.tmp
-.project
-.cproject
+*.project
+*.cproject
+*.svn
 
