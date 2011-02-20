@@ -247,7 +247,7 @@ inline double phred64ToDouble( char p )
 	return phredToDouble(phred64ToPhred(p));
 }
 
-void strrevi(char *s,int n)
+inline void strrevi(char *s,int n)
 {
   int i=0;
   while (i<n/2)
