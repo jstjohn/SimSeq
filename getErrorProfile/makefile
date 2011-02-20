@@ -1,48 +1,62 @@
 CC=gcc
 MACHTYPE=x86_64
 CFLAGS=-c
-COPTS=-Ikent/inc -Iinc -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -DMACHTYPE_${MACHTYPE}
+COPTS=-I../ThirdParty/kent/inc -I../inc -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -DMACHTYPE_${MACHTYPE}
+SAMINC=-I../ThirdParty/samtools
 LDFLAGS=-lm
+SAMLD=-L../ThirdParty/samtools -lbam
 FASIZE=faSize.c
-SOURCES=getErrorProfile.c
-LIBSRC=kent/lib/common.c kent/lib/dlist.c kent/lib/bPlusTree.c kent/lib/dystring.c \
-	 kent/lib/linefile.c kent/lib/nib.c kent/lib/sqlNum.c kent/lib/base64.c kent/lib/dnaLoad.c \
-	 kent/lib/errabort.c kent/lib/hash.c kent/lib/localmem.c kent/lib/obscure.c \
-         kent/lib/twoBit.c kent/lib/bits.c kent/lib/dnaseq.c kent/lib/fa.c kent/lib/https.c  kent/lib/mime.c \
-         kent/lib/options.c kent/lib/udc.c kent/lib/cheapcgi.c kent/lib/dnautil.c lib/fastq.c \
-	 kent/lib/internet.c kent/lib/net.c kent/lib/pipeline.c kent/lib/verbose.c kent/lib/memalloc.c \
-	 kent/lib/osunix.c kent/lib/portimpl.c kent/lib/htmshell.c kent/lib/filePath.c \
-	 kent/lib/log.c kent/lib/servpws.c kent/lib/servmsII.c kent/lib/servCrunx.c \
-	 kent/lib/servBrcMcw.c kent/lib/wildcmp.c kent/lib/servcis.c kent/lib/intExp.c\
-	 kent/lib/servcl.c kent/lib/kxTok.c
+SAMTOFQ=samToFastq.c
+ERRORPROFILE=getErrorProfile.c
+LIBSRC=../ThirdParty/kent/lib/common.c ../ThirdParty/kent/lib/dlist.c ../ThirdParty/kent/lib/bPlusTree.c ../ThirdParty/kent/lib/dystring.c \
+	 ../ThirdParty/kent/lib/linefile.c ../ThirdParty/kent/lib/nib.c ../ThirdParty/kent/lib/sqlNum.c ../ThirdParty/kent/lib/base64.c ../ThirdParty/kent/lib/dnaLoad.c \
+	 ../ThirdParty/kent/lib/errabort.c ../ThirdParty/kent/lib/hash.c ../ThirdParty/kent/lib/localmem.c ../ThirdParty/kent/lib/obscure.c \
+         ../ThirdParty/kent/lib/twoBit.c ../ThirdParty/kent/lib/bits.c ../ThirdParty/kent/lib/dnaseq.c ../ThirdParty/kent/lib/fa.c ../ThirdParty/kent/lib/https.c  ../ThirdParty/kent/lib/mime.c \
+         ../ThirdParty/kent/lib/options.c ../ThirdParty/kent/lib/udc.c ../ThirdParty/kent/lib/cheapcgi.c ../ThirdParty/kent/lib/dnautil.c lib/fastq.c \
+	 ../ThirdParty/kent/lib/internet.c ../ThirdParty/kent/lib/net.c ../ThirdParty/kent/lib/pipeline.c ../ThirdParty/kent/lib/verbose.c ../ThirdParty/kent/lib/memalloc.c \
+	 ../ThirdParty/kent/lib/osunix.c ../ThirdParty/kent/lib/portimpl.c ../ThirdParty/kent/lib/htmshell.c ../ThirdParty/kent/lib/filePath.c \
+	 ../ThirdParty/kent/lib/log.c ../ThirdParty/kent/lib/servpws.c ../ThirdParty/kent/lib/servmsII.c ../ThirdParty/kent/lib/servCrunx.c \
+	 ../ThirdParty/kent/lib/servBrcMcw.c ../ThirdParty/kent/lib/wildcmp.c ../ThirdParty/kent/lib/servcis.c ../ThirdParty/kent/lib/intExp.c\
+	 ../ThirdParty/kent/lib/servcl.c ../ThirdParty/kent/lib/kxTok.c
 
-
-OBJECTS=$(SOURCES:.c=.o)
 FASIZEO=$(FASIZE:.c=.o)
+SAMTOFQO=$(SAMTOFQ:.c=.o)
+ERRORPROFILEO=$(ERRORPROFILE:.c=.o)
 LIBOBJECTS=$(LIBSRC:.c=.o)
-EXECUTABLE=getErrorProfile
 
-all: $(SOURCES) $(LIBOBJECTS) $(EXECUTABLE) faSize $(FASIZEO)
+all: $(SOURCES) $(LIBOBJECTS) getErrorProfile faSize samToFastq
 
-$(EXECUTABLE): $(OBJECTS) $(LIBOBJECTS)
-	$(CC) $(COPTS) $(LDFLAGS) $(OBJECTS) $(LIBOBJECTS) -o $@
+getErrorProfile: $(ERRORPROFILEO) $(LIBOBJECTS)
+	$(CC) $(COPTS) $(LDFLAGS) $(ERRORPROFILEO) $(LIBOBJECTS) -o $@
 
 faSize: $(LIBOBJECTS) $(FASIZEO)
 	$(CC) $(COPTS) $(LDFLAGS) $(FASIZEO) $(LIBOBJECTS) -o $@
-	
-install: all
-	-mv $(EXECUTABLE) ../bin
-	-mv faSize ../bin
-#$(LIBA): $(LIBOBJECTS)
-#	ar rcus $(LIBA) $(LIBOBJECTS)
+
+samToFastq: SAMLIB $(LIBOBJECTS) $(SAMTOFQO)
+	$(CC) $(COPTS) $(SAMLD) $(LDFLAGS) $(SAMTOFQO) $(LIBOBJECTS) -o $@
+
+SAMLIB: ../ThirdParty/samtools/libbam.a
+
+../ThirdParty/samtools/libbam.a:
+	-pushd ../ThirdParty/samtools
+	-make
+	-popd
+
+../bin:
+	-mkdir ../bin
+
+install: all ../bin
+	-cp getErrorProfile ../bin
+	-cp samToFastq ../bin
+	-cp faSize ../bin
 
 .c.o:
-	$(CC) $(COPTS) $(CFLAGS) $< -o $@
+	$(CC) $(COPTS) $(CFLAGS) $(SAMINC) $< -o $@
 
 clean:
 	-rm $(OBJECTS) $(LIBOBJECTS) $(EXECUTABLE)
 
 check-syntax:
-	$(CC) ${CFLAGS} -o .nul -S ${CHK_SOURCES}
+	$(CC) $(CFLAGS) $(SAMINC) -o .nul -S $(CHK_SOURCES)
 
 
