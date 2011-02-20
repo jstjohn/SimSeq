@@ -22,7 +22,6 @@
 #include "sam.h"
 
 bool verboseOut = false;
-bam_header_t *header;
 
 
 
@@ -85,7 +84,7 @@ inline void fillFqItem(struct fastqItem *fq, bam1_t *b){
 }
 
 
-void processBamFile(bamFile fp, FILE *single, FILE *read1, FILE *read2, bool noUnmated)
+void processBamFile(samfile_t *fp, FILE *single, FILE *read1, FILE *read2, bool noUnmated)
 /*Iterate through all bam reads, a la samtools flagstat, and calculate our stats */
 {
   if(verboseOut)
@@ -106,7 +105,7 @@ void processBamFile(bamFile fp, FILE *single, FILE *read1, FILE *read2, bool noU
   }
   b = bam_init1();
   c = &b->core;
-  while ((ret = bam_read1(fp, b)) >= 0)
+  while ((ret = samread(fp, b)) >= 0)
   {
     //are we printing single reads, and pairs?
     if(c->flag & BAM_FSECONDARY) continue; //skip non-primary alignments;
@@ -180,14 +179,11 @@ int main(int argc, char *argv[])
   }
   int i;
   for(i=1;i<argc;i++){
-    bamFile fp = bam_open(argv[i],"r");
+    samfile_t *fp = samopen(argv[i],"rb",0);
     assert(fp);
-    header = bam_header_read(fp);
-    bam_init_header_hash(header);
     //process the bam file, write output
     processBamFile(fp,fs,f1,f2,noUnmated);
-    bam_header_destroy(header);
-    bam_close(fp);
+    samclose(fp);
   }
   if(single != NULL){
       fclose(fs);
