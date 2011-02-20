@@ -12,6 +12,7 @@
 
 #include <ctype.h>
 #include "common.h"
+#include "dnautil.h"
 #include "linefile.h"
 #include <math.h>
 #include <string.h>
@@ -73,7 +74,7 @@ void freeFastqItem(struct fastqItem * fq)
 }
 
 
-void printFastqItem(FILE *fp, struct fastqItem *fq)
+inline void printFastqItem(FILE *fp, struct fastqItem *fq)
 {
 	int i;
 	fprintf(fp,"@%s\n",fq->id);
@@ -165,17 +166,17 @@ boolean fastqItemNext(struct lineFile *lf, struct fastqItem *fq)
 	return TRUE;
 }
 
-void convPhred33ToPhred64( struct fastqItem *fq )
+inline void convPhred33ToPhred64( struct fastqItem *fq )
 {
 	phred33ToPhred64(fq->seq,fq->len);
 }//end phred33To64
 
-void convPhred64ToPhred33(struct fastqItem *fq)
+inline void convPhred64ToPhred33(struct fastqItem *fq)
 {
 	phred64ToPhred33(fq->seq,fq->len);
 }
 
-void phred33ToPhred64( char * p33, int l )
+inline void phred33ToPhred64( char * p33, int l )
 {
 	int i;
 	for(i=0;i<l;i++)
@@ -184,7 +185,7 @@ void phred33ToPhred64( char * p33, int l )
 	}
 }
 
-void phred64ToPhred33( char * p64, int l)
+inline void phred64ToPhred33( char * p64, int l)
 {
 	int i;
 	for(i=0;i<l;i++)
@@ -193,31 +194,31 @@ void phred64ToPhred33( char * p64, int l)
 	}
 }
 
-char phredToPhred33( int p )
+inline char phredToPhred33( int p )
 {
 	if (p > MAX_PHRED) p=MAX_PHRED;
 	else if (p < MIN_PHRED) p=MIN_PHRED;
 	return ((char) (p + 33));
 }
 
-int phred33ToPhred( char p )
+inline int phred33ToPhred( char p )
 {
 	return ((int)p) - 33;
 }
 
-int phred64ToPhred( char p )
+inline int phred64ToPhred( char p )
 {
 	return ((int)p) - 64;
 }
 
-char phredToPhred64( int p )
+inline char phredToPhred64( int p )
 {
 	if (p > MAX_PHRED) p=MAX_PHRED;
 	else if (p < MIN_PHRED) p=MIN_PHRED;
 	return ((char) (p + 64));
 }
 
-int doubleToPhred( double p )
+inline int doubleToPhred( double p )
 /* formula: -10 log10(p) */
 {
 	double res = -10.0 * log10(p);
@@ -226,7 +227,7 @@ int doubleToPhred( double p )
 	return ((int) (res +0.5));  //guarenteed >= 0
 }
 
-double phredToDouble( int p )
+inline double phredToDouble( int p )
 /* formula: 10^(-p/10)  */
 {
 	return 1.0/pow(10,((double)p)/10.0);
@@ -234,15 +235,33 @@ double phredToDouble( int p )
 
 /* Some Functions that can now be made from  a combination of existing functions */
 
-double phred33ToDouble( char p )
+inline double phred33ToDouble( char p )
 {
 	return phredToDouble(phred33ToPhred(p));
 }
 
-double phred64ToDouble( char p )
+inline double phred64ToDouble( char p )
 {
 	return phredToDouble(phred64ToPhred(p));
 }
 
+void strrevi(char *s,int n)
+{
+  int i=0;
+  while (i<n/2)
+  {
+    *(s+n) = *(s+i);//uses the null character as the temporary storage.
+    *(s+i) = *(s + n - i -1);
+    *(s+n-i-1) = *(s+n);
+    i++;
+  }
+  *(s+n) = '\0';
+}
+
+inline void reverseComplementFastqItem(struct fastqItem *fq){
+  //reverse complement the seq, and reverse the quality string
+  strrevi(fq->score,fq->len);
+  reverseComplement((DNA *)fq->seq,fq->len);
+}
 
 

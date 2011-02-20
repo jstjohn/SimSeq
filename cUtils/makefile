@@ -4,7 +4,7 @@ CFLAGS=-c
 COPTS=-I../ThirdParty/kent/inc -I../inc -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -DMACHTYPE_${MACHTYPE}
 SAMINC=-I../ThirdParty/samtools
 LDFLAGS=-lm
-SAMLD=-L../ThirdParty/samtools -lbam
+SAMLD=-L../ThirdParty/samtools -lbam -lz
 FASIZE=faSize.c
 SAMTOFQ=samToFastq.c
 ERRORPROFILE=getErrorProfile.c
@@ -12,7 +12,7 @@ LIBSRC=../ThirdParty/kent/lib/common.c ../ThirdParty/kent/lib/dlist.c ../ThirdPa
 	 ../ThirdParty/kent/lib/linefile.c ../ThirdParty/kent/lib/nib.c ../ThirdParty/kent/lib/sqlNum.c ../ThirdParty/kent/lib/base64.c ../ThirdParty/kent/lib/dnaLoad.c \
 	 ../ThirdParty/kent/lib/errabort.c ../ThirdParty/kent/lib/hash.c ../ThirdParty/kent/lib/localmem.c ../ThirdParty/kent/lib/obscure.c \
          ../ThirdParty/kent/lib/twoBit.c ../ThirdParty/kent/lib/bits.c ../ThirdParty/kent/lib/dnaseq.c ../ThirdParty/kent/lib/fa.c ../ThirdParty/kent/lib/https.c  ../ThirdParty/kent/lib/mime.c \
-         ../ThirdParty/kent/lib/options.c ../ThirdParty/kent/lib/udc.c ../ThirdParty/kent/lib/cheapcgi.c ../ThirdParty/kent/lib/dnautil.c lib/fastq.c \
+         ../ThirdParty/kent/lib/options.c ../ThirdParty/kent/lib/udc.c ../ThirdParty/kent/lib/cheapcgi.c ../ThirdParty/kent/lib/dnautil.c ../lib/fastq.c \
 	 ../ThirdParty/kent/lib/internet.c ../ThirdParty/kent/lib/net.c ../ThirdParty/kent/lib/pipeline.c ../ThirdParty/kent/lib/verbose.c ../ThirdParty/kent/lib/memalloc.c \
 	 ../ThirdParty/kent/lib/osunix.c ../ThirdParty/kent/lib/portimpl.c ../ThirdParty/kent/lib/htmshell.c ../ThirdParty/kent/lib/filePath.c \
 	 ../ThirdParty/kent/lib/log.c ../ThirdParty/kent/lib/servpws.c ../ThirdParty/kent/lib/servmsII.c ../ThirdParty/kent/lib/servCrunx.c \
@@ -38,9 +38,7 @@ samToFastq: SAMLIB $(LIBOBJECTS) $(SAMTOFQO)
 SAMLIB: ../ThirdParty/samtools/libbam.a
 
 ../ThirdParty/samtools/libbam.a:
-	-pushd ../ThirdParty/samtools
-	-make
-	-popd
+	cd ../ThirdParty/samtools && make
 
 ../bin:
 	-mkdir ../bin
@@ -54,7 +52,8 @@ install: all ../bin
 	$(CC) $(COPTS) $(CFLAGS) $(SAMINC) $< -o $@
 
 clean:
-	-rm $(OBJECTS) $(LIBOBJECTS) $(EXECUTABLE)
+	-rm $(LIBOBJECTS) $(SAMTOFQO) $(ERRORPROFILEO) $(FASIZEO) samToFastq faSize getErrorProfile
+	cd ../ThirdParty/samtools && make clean 
 
 check-syntax:
 	$(CC) $(CFLAGS) $(SAMINC) -o .nul -S $(CHK_SOURCES)
