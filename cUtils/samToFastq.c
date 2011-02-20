@@ -20,6 +20,7 @@
 #include "dnautil.h"
 #include "fastq.h"
 #include "sam.h"
+
 bool verboseOut = false;
 bam_header_t *header;
 
