@@ -29,7 +29,7 @@ void usage()
 /* Explain usage and exit. */
 {
   errAbort(
-      "samToFastq: Converts a sam or bam file into fastq files. The fastq reads are reverse complemented as specified in the alignment.\n"
+      "samToFastq: Converts a **Name Sorted (read pairs must be grouped at least)** sam or bam file into fastq files. The fastq reads are reverse complemented as specified in the alignment.\n"
       "usage:\n"
       "\tsamToFastq [required options] [options] alignment1.bam(sorted by name, sam is ok too) [alignment2.bam, ..., alignmentN.bam] \n"
       "\n**required** options:\n"
@@ -97,11 +97,13 @@ void processBamFile(samfile_t *fp, FILE *single, FILE *read1, FILE *read2, bool 
   if(verboseOut)
     fprintf(stderr,"Processing bam alignment...\n");
   bam1_t *b;
+  bam1_t *b_prev;
   bam1_core_t *c;
   int ret;
   bool print_single_file = false;
   bool print_pair_file = false;
   struct fastqItem *fq = allocFastqItem();
+  struct fastqItem *fq2 = allocFastqItem();
   if(read1 != NULL && read2 != NULL){
     print_pair_file = true;
   }
@@ -111,39 +113,59 @@ void processBamFile(samfile_t *fp, FILE *single, FILE *read1, FILE *read2, bool 
     print_single_file = true;
   }
   b = bam_init1();
+  b_prev = bam_init1();
   c = &b->core;
+  bool second_wait = false; //waiting for a second matching read to show up
   while ((ret = samread(fp, b)) >= 0)
   {
     //are we printing single reads, and pairs?
     if(c->flag & BAM_FSECONDARY) continue; //skip non-primary alignments;
-    fillFqItem(fq,b,phred64);
-    if(print_single_file && print_pair_file){
-      if(c->flag & BAM_FPAIRED){
-        if(c->flag & BAM_FREAD1)
-          printFastqItem(read1,fq);
-        else
-          printFastqItem(read2,fq);
-      }else{//single read
-        printFastqItem(single,fq);
-      }
-    }else if(print_pair_file){
-      //just print paired reads to the pair files
-      if(c->flag & BAM_FPAIRED){
-        if(c->flag & BAM_FREAD1)
-          printFastqItem(read1,fq);
-        else
-          printFastqItem(read2,fq);
-      }
+    if(!second_wait){
+      bam_copy1(b_prev,b);
+      second_wait = true;
     }else{
-      //print everything to singles
-      if(noUnmated){
-        if(c->flag & BAM_FPAIRED)
+      //check to see if read ids match
+      if(strcmp(bam1_qname(b),bam1_qname(b_prev))==0){
+        //print out b and b_prev
+        fillFqItem(fq,b,phred64);
+        fillFqItem(fq2,b_prev,phred64);
+        if(print_pair_file){
+          if(c->flag & BAM_FREAD1){
+            printFastqItem(read1,fq);
+            printFastqItem(read2,fq2);
+          }else{ //reads go in other files
+            printFastqItem(read1,fq2);
+            printFastqItem(read2,fq);
+          }
+        }else{//print both to single file
+          if(c->flag & BAM_FREAD1){
+            printFastqItem(single,fq);
+            printFastqItem(single,fq2);
+          }else{ //reads go in other files
+            printFastqItem(single,fq2);
+            printFastqItem(single,fq);
+          }
+        }
+        //set second_wait to false
+        second_wait = false;
+      }else{ //reads don't match, print the single
+        if(print_single_file && !noUnmated){
+          fillFqItem(fq,b_prev,phred64);
           printFastqItem(single,fq);
-      }else{
-        printFastqItem(single,fq);
+        }
+        //copy b into b_prev, and second_wait = true
+        second_wait = true;
+        bam_copy1(b_prev,b);
       }
-    }
+
+    }//end second_wait == true
   }//end while loop over reads
+  if(second_wait){//hit last read, and it couldn't be a match to the prev
+    if(print_single_file && !noUnmated){
+      fillFqItem(fq,b_prev,phred64);
+      printFastqItem(single,fq);
+    }
+  }
   bam_destroy1(b);
   freeFastqItem(fq);
 }
