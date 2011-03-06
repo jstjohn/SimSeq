@@ -4,7 +4,7 @@ getErrorProfile contains the c source for the program that generates the
 error model for the sequence simulator. This program utilizes a subset
 of the kent source library (http://hgwdev.cse.ucsc.edu/~kent/src/) which
 is freely available for both commercial and non-commercial use 
-(see README in "getErrorProfile/kent" for more information)
+(see README in "ThirdParty/kent" for more information)
 
 
 examples contains some things to run this on. Right now there is
