@@ -10,6 +10,7 @@
 #include "dnaseq.h"
 #include <stdbool.h>
 #include "sam.h"
+#define FIRST_PREV_PHRED (0)
 
 //static char const rcsid[] = "$Id: newProg.c,v 1.30 2010/03/24 21:18:33 hiram Exp $";
 
@@ -109,7 +110,6 @@ unsigned int nearestIdxFromPscore(unsigned int pscore){
     }
   }
   return plen-1;
-
 }
 
 
@@ -151,16 +151,6 @@ bool invalid(char c){
   }
 }
 
-bool hasAny(unsigned long long ** c){
-  int i,j;
-  for(i=0;i<4;i++){
-    for(j=0;j<5;j++){
-      if(c[i][j] > 0) return true;
-    }
-  }
-  return false;
-}
-
 void getErrorProfile(char *reflist)
 /* getErrorProfile - Generate the error profile given a bam alignment reference. */
 {
@@ -177,16 +167,18 @@ void getErrorProfile(char *reflist)
   //};
   //
   //struct hash *dnaSeqHash(struct dnaSeq *seqList);
+  unsigned long long insertions = 0; //for now just count these and write to stderr as stats
+  unsigned long long deletions = 0;
   struct dnaSeq *seqs = dnaLoadAll(refName);
   refHash = dnaSeqHash(seqs);
   int i,j,k,l;
-  //For every position store the off diagonal substitution matrix + the frequency of shifting to N
+  //For every position store the complete substitution matrix A->A...T->N
   unsigned long long **** mutation = (unsigned long long ****)needMem(sizeof(unsigned long long ***)*readLen);//will hold a position specific hist
   for(i=0;i<readLen;i++)
   {
     mutation[i] = (unsigned long long ****)needMem(sizeof(unsigned long long***) *plen); //previous quality scores
     for(j=0;j<plen;j++){
-      mutation[i][j] = (unsigned long long ***)needMem(sizeof(unsigned long long **)*plen); //second quality score
+      mutation[i][j] = (unsigned long long ***)needMem(sizeof(unsigned long long **)*plen); //current quality score
       for(k=0;k<plen;k++){
         mutation[i][j][k] = (unsigned long long **)needMem(sizeof(unsigned long long *)*4); //4 reference bases
         for(k=0;l<4;l++){
@@ -274,18 +266,12 @@ void getErrorProfile(char *reflist)
       readChar = toupper(seq[read_pos]);
       score_idx = nearestIdxFromPscore(qual[read_pos]);
 
-
-      //TODO: DECIDE ON ERROR MODEL AND DROP IT IN!
-      //TODO: phred conditioned on last phred (and last base?)
-      //TODO: Seperate indel model?
-
       /***
        * parse this position of the alignment
        */
       //let op==BAM_SOFTCLIP be a mapping position.
       if( op == BAM_CINS ){ //insertion to the reference
         //TODO: handle insertions
-
         read_pos++; //inc read not ref
       }else if(op == BAM_CDEL){ //deletion from the reference
         //TODO: handle deletions
@@ -294,9 +280,12 @@ void getErrorProfile(char *reflist)
         //TODO: handle... whatever this is (basically a long deletion?).
         ref_pos++; //inc ref not read
       }else{// 1-1 mapping (for the purposes of this, a clipped read is fair game)
-
         if(!invalid(refChar)){
-          //FIXME: document SNPs
+          if(read_pos == 0){ //no prev phred score!
+            mutation[FIRST_PREV_PHRED][score_idx][baseIndex(refChar)][baseIndex(readChar)]++;
+          }else{ //standard situation
+            mutation[prev_score_idx][score_idx][baseIndex(refChar)][baseIndex(readChar)]++;
+          }
         }
         read_pos++;
         ref_pos++;
@@ -311,112 +300,25 @@ void getErrorProfile(char *reflist)
   samclose(fp);
 
 
-
-
-  //TODO: once new error model decided, change this procedure to print it
   //print out the error histogram file.
-//  printf("#Pos\tPhred\tA->A\tA->C\tA->G\tA->T\tA->N\tC->A\tC->C\tC->G\tC->T\tC->N\tG->A\tG->C\tG->G\tG->T\tG->N\tT->A\tT->C\tT->G\tT->T\tT->N\n");
-//  int p;
-//  for(i=0;i<readLen;i++){
-//    for(p=0;p<=60;p++){
-//      if(hasAny(mutation[i][p])){ //if there are any phred scores to report here...
-//        printf("%d\t%d",i,p); //print pos\tphred
-//        for(j=0;j<4;j++){
-//          for(k=0;k<5;k++)
-//            printf("\t%llu", mutation[i][p][j][k]);
-//        }
-//        printf("\n");
-//      }
-//    }
-//  }
-//  printf("\n\n");
+  printf("#Pos\tPrev_Phred\tCurr_Phred\tA->A\tA->C\tA->G\tA->T\tA->N\tC->A\tC->C\tC->G\tC->T\tC->N\tG->A\tG->C\tG->G\tG->T\tG->N\tT->A\tT->C\tT->G\tT->T\tT->N\n");
+  int pp,pc;
+  for(i=0;i<readLen;i++){
+    for(pp=0;pp<plen;pp++){
+      if(i==0 && pp != FIRST_PREV_PHRED)
+        continue; //nothing to print for this value of pp at this position
+      for(pc=0;pc<plen;pc++){
+        printf("%d\t%d\t%d",i,plist[pp],plist[pc]); //print pos\tprev_pred\tcurr_phred
+        for(j=0;j<4;j++){
+          for(k=0;k<5;k++)
+            printf("\t%llu", mutation[i][pp][pc][j][k]);
+        }
+        printf("\n");
 
-
-
-
-
-
-
-
-
-
-  /**
-   * TODO: OLD METHOD!!! MERGE THIS INTO THE ABOVE
-   */
-
-//  while(lineFileChopNextTab(samlf, words, 12))
-//  {   	//only interested in first 11 positions, 12th will hold rest?
-//    DNA *seq = words[9];
-//    junk++;
-//    struct dnaSeq *ref = NULL;
-//    char *score = words[10];
-//    char *chrom = words[2];
-//    unsigned int pseudo = 1; //pseudo count to give to all non N characters with at least one phred score in the sequence
-//    int leftPos = atoi(words[3])-1; //0 based left most position
-//    unsigned int flag = atoi(words[1]);
-//    unsigned int rev_mask = 16;//0x10 in hex
-//    //int paired_mask = 1;
-//    char refChar;
-//    char readChar;
-//    unsigned prev_pscore_ind = 0;
-//    unsigned pscore_ind = 0;
-//    unsigned pos = strlen(seq);
-//    unsigned int reverse = flag & rev_mask; //bit mask everything other than 0x0010
-//    if (reverse) //0 for forward, 1 for reverse
-//    { //sequence and score are complemented and/or reversed
-//      for(i=0; i <readLen ; i++)
-//      {
-//        --pos; //start at last index + 1, decrement at beginning
-//        //i stores the 0- desired readlen index
-//        //pos stores the true readLen - (true-desired) index, this gets us the end of a read
-//        ref = hashFindVal(refHash, chrom);
-//        if(!ref) errAbort("Sequence name %s not found in reference\n",chrom);
-//        refChar = toupper(ref->dna[leftPos+pos]);
-//        readChar = toupper(seq[pos]);
-//
-//        if(invalid(refChar)) continue; //skip non-nucleotides in the reference
-//
-//        if (phred33) pscore = phred33ToPhred(score[pos]);
-//        else if (phred64) pscore = phred64ToPhred(score[pos]);
-//
-//        if(mutation[i][pscore][0][0] < pseudo){ //add in pseudocounts for everything other than N, haven't done this already
-//          int tmp1,tmp2;
-//          for(tmp1=0;tmp1<4;tmp1++){
-//            for(tmp2=0;tmp2<4;tmp2++){
-//              mutation[i][pscore][tmp1][tmp2]=pseudo;
-//            }
-//          }
-//        }
-//        mutation[i][pscore][baseIndex(complementSingle(refChar))][baseIndex(complementSingle(readChar))]++; //increment for sequenced error
-//      }
-//    }
-//    else
-//    {
-//      for(i=0;i<readLen;i++)
-//      {
-//        ref = hashFindVal(refHash, chrom);
-//        if(!ref) errAbort("Sequence name %s not found in reference\n",chrom);
-//        refChar = toupper(ref->dna[leftPos+i]);
-//        //else refChar = complementSingle(ref->dna[leftPos+readLen-1-i]);
-//        readChar = toupper(seq[i]);
-//        if(invalid(refChar)) continue; //skip non-nucleotides in the reference
-//        //handle phred histogram
-//        if (phred33) pscore = phred33ToPhred(score[i]);
-//        else if (phred64) pscore = phred64ToPhred(score[i]);
-//        if(mutation[i][pscore][0][0] < pseudo){ //add in pseudocounts for everything other than N
-//          int tmp1,tmp2;
-//          for(tmp1=0;tmp1<4;tmp1++){
-//            for(tmp2=0;tmp2<4;tmp2++){
-//              mutation[i][pscore][tmp1][tmp2]=pseudo;
-//            }
-//          }
-//        }
-//        mutation[i][pscore][baseIndex(refChar)][baseIndex(readChar)]++;
-//      } //loop over read length
-//    }
-//
-//  }//end while
-
+      }
+    }
+  }
+  printf("\n\n");
 
 }
 
