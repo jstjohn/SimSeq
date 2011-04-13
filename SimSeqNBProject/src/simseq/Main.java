@@ -109,7 +109,7 @@ public class Main{
             //get seq length
             //get seq length
             FastaReader far = new FastaReader(ref);
-            int totalLen = 0;
+            long totalLen = 0;
             for(FastaRecord rec :far){
                 totalLen += rec.getSeq().length();
             }
@@ -141,7 +141,7 @@ public class Main{
                 sr2.setRef(rec.getID());
                 SeqSampler sampler = new SeqSampler(rec.getSeq());
                 //find out how many reads to sample from this sequence
-                int len = rec.getSeq().length();
+                long len = rec.getSeq().length();
                 long num = Math.round(((double)len/(double)totalLen)*(double)read_number);
                 Random r = new Random();
                 String tmpseq1 = null,
