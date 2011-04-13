@@ -77,13 +77,14 @@ java.lang.Object
 java.lang.String
 ||:simseq.SamWriter
 java.lang.StringBuilder
+java.lang.Math
 simseq.StringBuilderDNA
 java.lang.Long
 java.io.FileWriter
 simseq.SamWriter
 java.io.BufferedWriter
-java.io.IOException
 java.lang.Object
+java.io.IOException
 java.io.PrintWriter
 simseq.SamRecord
 java.lang.Integer

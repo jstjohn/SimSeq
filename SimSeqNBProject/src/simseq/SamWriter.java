@@ -16,18 +16,33 @@ import java.io.PrintWriter;
 public class SamWriter {
     private final File file;
     private final PrintWriter writer;
-
-    public SamWriter(final File file) throws IOException {
+    private final boolean informative_id;
+    public SamWriter(final File file, boolean inf_id) throws IOException {
         this.file = file;
+        this.informative_id = inf_id;
         this.writer = new PrintWriter(new BufferedWriter(new FileWriter(file, false)));
        // this.writer = new PrintWriter(IoUtil.openFileForBufferedWriting(file));
     }
-
     public void write(final SamRecord rec) throws IOException {
         
         //<QNAME> <FLAG> <RNAME> <POS> <MAPQ> <CIGAR> <MRNM> <MPOS> <ISIZE> <SEQ> <QUAL> \
         //[<TAG>:<VTYPE>:<VALUE> [...]]
-        writer.print(rec.seqHeaderPrefix);//print prefix
+        
+        //print the informative id if desired
+        if(this.informative_id){
+            writer.print(rec.refname);
+            writer.print("_");
+            writer.print(Math.min(rec.pos, rec.mpos));
+            writer.print("_");
+            writer.print(rec.pos+Math.abs(rec.isize));
+            if(rec.first && rec.query_reverse_strand || rec.second && rec.mate_reverse_strand){
+                writer.print("_R_");
+            }else{// from forward strand
+                writer.print("_F_");
+            }
+        }else{
+            writer.print(rec.seqHeaderPrefix);//print prefix
+        }
         writer.print(Long.toHexString(rec.seqIndex)); //qname
         writer.print("\t");
         writer.print(Integer.toString(rec.getFlag()));//flag
