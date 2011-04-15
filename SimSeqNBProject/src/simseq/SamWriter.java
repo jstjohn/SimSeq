@@ -35,7 +35,11 @@ public class SamWriter {
             long start = Math.min(rec.pos, rec.mpos);
             writer.print(start);
             writer.print("_");
-            writer.print(start+Math.abs(rec.isize));
+            //one based typically starts at 1 base and ends at 0 base
+            // for example a sequence of length 1 starting at 0 based position 0
+            // would have the location 1 to 1 while most CS apps typically
+            // would write the same thing as 0-1. 
+            writer.print(start+Math.abs(rec.isize)-1);
             if(rec.first && rec.query_reverse_strand || rec.second && rec.mate_reverse_strand){
                 writer.print("_R_");
             }else{// from forward strand
