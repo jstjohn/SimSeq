@@ -36,6 +36,8 @@ public class Main{
             String def_mate_non_biotin_pulldown_p = "0.3";
             String def_read_prefix = "SimSeq_";
             String def_read_number = "1000000";
+            String def_adapt1 = "AGATCGGAAGAGCGGTTCAGCAGGAATGCCGAGACCG";
+            String def_adapt2 = "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT";
 
             Options options = new Options();
             //REQUIRED ARGS
@@ -44,6 +46,8 @@ public class Main{
 
 
             //OPTIONAL ARGS
+            options.addOption(null,"adapter1",true, "The first read illumina adapter sequence to use when the insert size is less than the read length. Currently only works on paired end simulation. Defalt:"+def_adapt1);
+            options.addOption(null,"adapter2",true, "The second read illumina adapter sequence to use when the insert size is less than the read length. Currently only works on paired end simulation. Defalt:"+def_adapt2);
             options.addOption("d", "dip", true, "If diploid data desired, path to diploid file. (format: chrom pos(0 based) altChar");
             options.addOption("e", "error", true, "If simulated read error desired, path to read error file.");
             options.addOption(null, "error2", true, "If you desire a seperate error distribution to be applied to the second read, then provide a path to that error profile with this option");
@@ -90,6 +94,25 @@ public class Main{
             AddError eadd = null;
             AddError eadd2 = null;
             boolean phred33 = true;
+           
+            
+            StringBuilder tadapt1 = new StringBuilder(cmd.getOptionValue("adapt1",def_adapt1));
+            StringBuilder tadapt2 = new StringBuilder(cmd.getOptionValue("adapt2",def_adapt2));
+            //fill in difference if shorter with cruft
+            while(tadapt1.length() < read1_length){
+                tadapt1.append('A');
+            }
+            while(tadapt2.length() < read2_length){
+                tadapt2.append('A');
+            }
+            
+            
+            
+            String adapter1 = tadapt1.toString();
+            String adapter2 = tadapt2.toString(); //reverse complemented
+            
+            
+            
             if(cmd.hasOption("phred64"))phred33=false;
             if(cmd.hasOption('d')){
                 System.err.println("WARNING: diploid sites addition is not currently implemented");
@@ -244,7 +267,9 @@ public class Main{
                                 library_ins_mean,
                                 library_ins_stdev,
                                 read1_length,
-                                read2_length, r);
+                                read2_length,
+                                adapter1,adapter2,
+                                r);
                         if(dadd != null){
                             dadd.AddDiploidRead(sr1);
                             dadd.AddDiploidRead(sr2);

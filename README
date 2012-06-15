@@ -15,11 +15,25 @@ less than or equal to 100bp in length using that error profile.
 
 
 usage: java -jar -Xmx2048m SimSeq.jar [required options] [options]
-            Last Updated: 12.2.2010
+            Last Updated: 4.12.2011
  -1,--read1_length <arg>            Integer length of first read. Default:
                                     100
  -2,--read2_length <arg>            Integer length of second read.
                                     Default: 100
+    --adapter1 <arg>                The first read illumina adapter
+                                    sequence to use when the insert size
+                                    is less than the read length.
+                                    Currently only works on paired end
+                                    simulation.
+                                    Defalt:AGATCGGAAGAGCGGTTCAGCAGGAATGCCG
+                                    AGACCG
+    --adapter2 <arg>                The second read illumina adapter
+                                    sequence to use when the insert size
+                                    is less than the read length.
+                                    Currently only works on paired end
+                                    simulation.
+                                    Defalt:AGATCGGAAGAGCGTCGTGTAGGGAAAGAGT
+                                    GT
  -d,--dip <arg>                     If diploid data desired, path to
                                     diploid file. (format: chrom pos(0
                                     based) altChar
@@ -31,6 +45,10 @@ usage: java -jar -Xmx2048m SimSeq.jar [required options] [options]
                                     second read, then provide a path to
                                     that error profile with this option
  -h,--help                          Print this usage message.
+    --inf_id                        Output location information in the
+                                    read ID. Currently this is only
+                                    informative for paired-end data and
+                                    note mate paired.
  -l,--insert_size <arg>             mean library insert size for either
                                     mate-paired or paired-end. Default:
                                     200
@@ -60,8 +78,6 @@ usage: java -jar -Xmx2048m SimSeq.jar [required options] [options]
                                     mate-paired or paired-end. Default: 20
  -u,--duplicate_probability <arg>   probability of generating a duplicate.
                                     Default: 0.0
-
-
 
 ===Quick Start Example:===
 ==Prerequisits==
